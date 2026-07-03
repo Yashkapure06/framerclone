@@ -18,7 +18,10 @@ import { detectNpmDependencies } from "@/lib/detect-dependencies";
 const JOBS_DIR = path.join(process.cwd(), ".extractions");
 
 function safeFileName(name: string) {
-  return (name || "extracted-site").replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-").toLowerCase();
+  return (name || "extracted-site")
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .toLowerCase();
 }
 
 function slugToComponentName(slug: string): string {
@@ -47,12 +50,19 @@ function extractTitle(html: string): string {
 
 function extractMetaDescription(html: string): string {
   const m =
-    html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
-    html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+    html.match(
+      /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i,
+    ) ||
+    html.match(
+      /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i,
+    );
   return m?.[1]?.trim() || "";
 }
 
-function extractInternalLinksFromHtml(html: string, baseUrlStr: string): string[] {
+function extractInternalLinksFromHtml(
+  html: string,
+  baseUrlStr: string,
+): string[] {
   let base: URL;
   try {
     base = new URL(baseUrlStr);
@@ -69,7 +79,8 @@ function extractInternalLinksFromHtml(html: string, baseUrlStr: string): string[
       const u = new URL(href, base);
       if (u.hostname === base.hostname) {
         let pathname = u.pathname || "/";
-        if (pathname.length > 1 && pathname.endsWith("/")) pathname = pathname.slice(0, -1);
+        if (pathname.length > 1 && pathname.endsWith("/"))
+          pathname = pathname.slice(0, -1);
         out.push(pathname || "/");
       }
     } catch {
@@ -118,16 +129,30 @@ const PRETTIER_OPTIONS = {
 function inferPrettierParser(filepath: string): string | undefined {
   const ext = (filepath.split(".").pop() || "").toLowerCase();
   switch (ext) {
-    case "js": case "jsx": case "mjs": case "cjs": return "babel";
-    case "ts": case "tsx": return "typescript";
-    case "css": case "scss": return "css";
-    case "json": return "json";
-    case "md": return "markdown";
-    default: return undefined;
+    case "js":
+    case "jsx":
+    case "mjs":
+    case "cjs":
+      return "babel";
+    case "ts":
+    case "tsx":
+      return "typescript";
+    case "css":
+    case "scss":
+      return "css";
+    case "json":
+      return "json";
+    case "md":
+      return "markdown";
+    default:
+      return undefined;
   }
 }
 
-async function formatFile(content: string, filepath: string): Promise<{ output: string; ok: boolean }> {
+async function formatFile(
+  content: string,
+  filepath: string,
+): Promise<{ output: string; ok: boolean }> {
   const parser = inferPrettierParser(filepath);
   try {
     const formatted = await prettier.format(content, {
@@ -145,7 +170,9 @@ async function formatFile(content: string, filepath: string): Promise<{ output: 
           parser: "html",
         });
         return { output: formatted, ok: true };
-      } catch { /* fall through */ }
+      } catch {
+        /* fall through */
+      }
     }
     return { output: content, ok: false };
   }
@@ -179,7 +206,9 @@ async function formatAndZipTextFiles(
 
 function extractGoogleFontsLinks(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/<link[^>]*href=["'](https:\/\/fonts\.googleapis\.com\/[^"']+)["']/gi)) {
+  for (const m of html.matchAll(
+    /<link[^>]*href=["'](https:\/\/fonts\.googleapis\.com\/[^"']+)["']/gi,
+  )) {
     if (m[1]) results.push(m[1]);
   }
   return [...new Set(results)];
@@ -194,14 +223,24 @@ interface HeadLinkDesc {
 }
 
 function collectHeadInnerFragments(htmlCombined: string): string[] {
-  const heads = [...htmlCombined.matchAll(/<head[^>]*>([\s\S]*?)<\/head>/gi)].map((m) => m[1] || "");
+  const heads = [
+    ...htmlCombined.matchAll(/<head[^>]*>([\s\S]*?)<\/head>/gi),
+  ].map((m) => m[1] || "");
   if (heads.length > 0) return heads;
   const t = htmlCombined.trim();
   return t ? [t] : [];
 }
 
-function parseHeadLinkDescriptors(htmlCombined: string, limit = 40): HeadLinkDesc[] {
-  const allowRel = new Set(["stylesheet", "preload", "preconnect", "dns-prefetch"]);
+function parseHeadLinkDescriptors(
+  htmlCombined: string,
+  limit = 40,
+): HeadLinkDesc[] {
+  const allowRel = new Set([
+    "stylesheet",
+    "preload",
+    "preconnect",
+    "dns-prefetch",
+  ]);
   const seen = new Set<string>();
   const out: HeadLinkDesc[] = [];
 
@@ -217,7 +256,8 @@ function parseHeadLinkDescriptors(htmlCombined: string, limit = 40): HeadLinkDes
       if (rel === "preload") {
         const asM = attrs.match(/\bas\s*=\s*["']([^"']*)["']/i);
         const asVal = asM?.[1]?.toLowerCase() || "";
-        if (asVal && asVal !== "font" && asVal !== "style" && asVal !== "image") continue;
+        if (asVal && asVal !== "font" && asVal !== "style" && asVal !== "image")
+          continue;
       }
       const href = hrefM[1].trim();
       if (!href || href.toLowerCase().startsWith("javascript:")) continue;
@@ -226,7 +266,10 @@ function parseHeadLinkDescriptors(htmlCombined: string, limit = 40): HeadLinkDes
       seen.add(key);
 
       let crossOrigin: HeadLinkDesc["crossOrigin"];
-      if (/\bcrossorigin\s*=\s*["']anonymous["']/i.test(attrs) || /\bcrossorigin(?!\s*=)/i.test(attrs)) {
+      if (
+        /\bcrossorigin\s*=\s*["']anonymous["']/i.test(attrs) ||
+        /\bcrossorigin(?!\s*=)/i.test(attrs)
+      ) {
         crossOrigin = "anonymous";
       } else if (/\bcrossorigin\s*=\s*["']use-credentials["']/i.test(attrs)) {
         crossOrigin = "use-credentials";
@@ -278,7 +321,10 @@ function stripEventHandlersFromAttributeString(attrs: string): string {
  * Framer often sets `data-framer-root` on `<body>` while we only embed body's children.
  * Clone those attributes onto a wrapper so descendant selectors still match.
  */
-function wrapBodyInnerIfFramerRootOnBody(fullHtml: string, bodyInnerSanitized: string): string {
+function wrapBodyInnerIfFramerRootOnBody(
+  fullHtml: string,
+  bodyInnerSanitized: string,
+): string {
   const open = fullHtml.match(/<body([^>]*)>/i)?.[1];
   if (!open) return bodyInnerSanitized;
   if (!/data-framer-root/i.test(open)) return bodyInnerSanitized;
@@ -333,7 +379,9 @@ function extractNavItems(html: string): { label: string; href: string }[] {
   const navBlock = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i);
   if (!navBlock) return [];
   const items: { label: string; href: string }[] = [];
-  for (const m of navBlock[1].matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+  for (const m of navBlock[1].matchAll(
+    /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+  )) {
     const href = m[1]?.trim();
     const label = m[2]?.replace(/<[^>]+>/g, "").trim();
     if (href && label && label.length < 40) items.push({ label, href });
@@ -362,28 +410,43 @@ function syntheticPageUrl(siteBase: string, slug: string): string {
 }
 
 function resolvePageUrlForSlug(manifest: any, slug: string): string {
-  const crawled = (manifest.crawledPages || []) as { slug?: string; url?: string }[];
+  const crawled = (manifest.crawledPages || []) as {
+    slug?: string;
+    url?: string;
+  }[];
   for (const c of crawled) {
-    if (c.slug === slug && typeof c.url === "string" && c.url.length > 0) return c.url;
+    if (c.slug === slug && typeof c.url === "string" && c.url.length > 0)
+      return c.url;
   }
-  const base = typeof manifest.url === "string" && manifest.url.length > 0 ? manifest.url : "https://example.invalid/";
+  const base =
+    typeof manifest.url === "string" && manifest.url.length > 0
+      ? manifest.url
+      : "https://example.invalid/";
   return syntheticPageUrl(base, slug);
 }
 
-function loadPages(jobDir: string, manifest: any, dirName: "pages" | "pages-rendered" = "pages"): PageInfo[] {
+function loadPages(
+  jobDir: string,
+  manifest: any,
+  dirName: "pages" | "pages-rendered" = "pages",
+): PageInfo[] {
   // Rendered pages (post-JS DOM) feed the static JSX exports; fall back to the
   // raw SSR pages when the extraction ran without Playwright.
   if (dirName === "pages-rendered") {
     const renderedDir = path.join(jobDir, "pages-rendered");
     const hasRendered =
-      fs.existsSync(renderedDir) && fs.readdirSync(renderedDir).some((f) => f.endsWith(".html"));
+      fs.existsSync(renderedDir) &&
+      fs.readdirSync(renderedDir).some((f) => f.endsWith(".html"));
     if (!hasRendered) return loadPages(jobDir, manifest, "pages");
     const rawPages = loadPages(jobDir, manifest, "pages");
     const results: PageInfo[] = [];
-    for (const file of fs.readdirSync(renderedDir).filter((f) => f.endsWith(".html"))) {
+    for (const file of fs
+      .readdirSync(renderedDir)
+      .filter((f) => f.endsWith(".html"))) {
       const html = fs.readFileSync(path.join(renderedDir, file), "utf-8");
       const slugName = file.replace(/\.html$/, "");
-      const slug = slugName === "index" ? "/" : "/" + slugName.replace(/--/g, "/");
+      const slug =
+        slugName === "index" ? "/" : "/" + slugName.replace(/--/g, "/");
       results.push({
         slug,
         title: extractTitle(html) || slugName,
@@ -420,7 +483,8 @@ function loadPages(jobDir: string, manifest: any, dirName: "pages" | "pages-rend
   for (const file of files) {
     const html = fs.readFileSync(path.join(pagesDir, file), "utf-8");
     const slugName = file.replace(/\.html$/, "");
-    const slug = slugName === "index" ? "/" : "/" + slugName.replace(/--/g, "/");
+    const slug =
+      slugName === "index" ? "/" : "/" + slugName.replace(/--/g, "/");
     const title = extractTitle(html) || slugName;
     results.push({
       slug,
@@ -470,7 +534,7 @@ html, body { margin: 0; }
 body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; color: #111; }
 `;
 
-/** Merge combined.css with inline <style> blocks. Always merge — inline blocks often hold
+/** Merge combined.css with inline <style> blocks. Always merge - inline blocks often hold
  *  keyframes, CSS variables, and animation resets that combined.css misses. */
 function gatherBundleCss(jobDir: string, pages: PageInfo[]): string {
   const primary = loadCombinedCss(jobDir).trim();
@@ -510,7 +574,7 @@ function cleanCssForReactNext(css: string): string {
   return css.replace(/@charset\s+["'][^"']*["']\s*;/gi, "");
 }
 
-/** Extract <style> content from <head> only — CSS vars and resets defined there are
+/** Extract <style> content from <head> only - CSS vars and resets defined there are
  *  not in the body, so dangerouslySetInnerHTML never sees them. */
 function extractHeadStyleBlocks(html: string): string[] {
   const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
@@ -518,31 +582,55 @@ function extractHeadStyleBlocks(html: string): string[] {
   return extractInlineStylesFromSavedHtml(headMatch[1]);
 }
 
-interface ExternalScript { src: string; defer: boolean; async: boolean; }
+interface ExternalScript {
+  src: string;
+  defer: boolean;
+  async: boolean;
+}
 
 /** Collect CDN script URLs from the page (skip same-origin, ES modules, and JSON-LD).
  *  These drive animations (GSAP, AOS, ScrollReveal, etc.) and must be loaded at runtime. */
-function extractExternalScriptUrls(html: string, siteOrigin: string): ExternalScript[] {
+function extractExternalScriptUrls(
+  html: string,
+  siteOrigin: string,
+): ExternalScript[] {
   const out: ExternalScript[] = [];
   const seen = new Set<string>();
   for (const m of html.matchAll(/<script([^>]*)>/gi)) {
     const attrs = m[1];
-    if (/type=["'](?:module|application\/(?:json|ld\+json))["']/i.test(attrs)) continue;
+    if (/type=["'](?:module|application\/(?:json|ld\+json))["']/i.test(attrs))
+      continue;
     const srcM = attrs.match(/\bsrc=["']([^"']+)["']/i);
     if (!srcM) continue;
     const src = srcM[1].trim();
-    if (!src || src.startsWith("data:") || src.startsWith("blob:") || seen.has(src)) continue;
+    if (
+      !src ||
+      src.startsWith("data:") ||
+      src.startsWith("blob:") ||
+      seen.has(src)
+    )
+      continue;
     seen.add(src);
     let resolved: URL;
-    try { resolved = new URL(src, siteOrigin || "https://example.invalid"); } catch { continue; }
+    try {
+      resolved = new URL(src, siteOrigin || "https://example.invalid");
+    } catch {
+      continue;
+    }
     if (siteOrigin && resolved.origin === siteOrigin) continue; // same-site → already in public/scripts
-    out.push({ src, defer: /\bdefer\b/i.test(attrs), async: /\basync\b/i.test(attrs) });
+    out.push({
+      src,
+      defer: /\bdefer\b/i.test(attrs),
+      async: /\basync\b/i.test(attrs),
+    });
   }
   return out.slice(0, 12);
 }
 
 /** Extract unique external image hostnames for next.config.mjs remotePatterns */
-function extractImageRemoteHostnames(assetMap: Record<string, string>): string[] {
+function extractImageRemoteHostnames(
+  assetMap: Record<string, string>,
+): string[] {
   const hostnames = new Set<string>();
   for (const key of Object.keys(assetMap)) {
     try {
@@ -550,12 +638,14 @@ function extractImageRemoteHostnames(assetMap: Record<string, string>): string[]
       if (u.protocol === "https:" || u.protocol === "http:") {
         hostnames.add(u.hostname);
       }
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
   return [...hostnames];
 }
 
-/** AnimationInit component — initializes CDN-loaded animation libs after mount */
+/** AnimationInit component - initializes CDN-loaded animation libs after mount */
 function buildAnimationInitComponent(): string {
   return `import { useEffect, useRef } from 'react';
 
@@ -575,7 +665,7 @@ export default function AnimationInit() {
         window.ScrollTrigger.refresh();
       }
 
-      // AOS — re-init after brief delay for DOM sync
+      // AOS - re-init after brief delay for DOM sync
       if (window.AOS) {
         window.AOS.init({ duration: 800, once: false });
         setTimeout(() => window.AOS.refresh(), 100);
@@ -598,7 +688,7 @@ export default function AnimationInit() {
       // ScrollReveal
       if (window.ScrollReveal) window.ScrollReveal().reveal('[data-sr]');
 
-      // Framer Motion — trigger after DOM settle
+      // Framer Motion - trigger after DOM settle
       if (window.fm) {
         requestAnimationFrame(() => {
           document.querySelectorAll('[data-framer-href], [data-framer-component-type]').forEach((el) => {
@@ -655,7 +745,10 @@ function loadAssetMap(jobDir: string): Record<string, string> {
   const fp = path.join(jobDir, "asset-map.json");
   if (!fs.existsSync(fp)) return {};
   try {
-    const raw = JSON.parse(fs.readFileSync(fp, "utf-8")) as Record<string, string>;
+    const raw = JSON.parse(fs.readFileSync(fp, "utf-8")) as Record<
+      string,
+      string
+    >;
     // Normalize Windows backslashes in values to forward slashes
     const normalized: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw)) {
@@ -689,7 +782,10 @@ function normalizePathKey(pathname: string): string {
   return p.toLowerCase();
 }
 
-function buildPathnameToSlugMap(pages: PageInfo[], siteOrigin: string): Map<string, string> {
+function buildPathnameToSlugMap(
+  pages: PageInfo[],
+  siteOrigin: string,
+): Map<string, string> {
   const m = new Map<string, string>();
   for (const page of pages) {
     try {
@@ -704,7 +800,9 @@ function buildPathnameToSlugMap(pages: PageInfo[], siteOrigin: string): Map<stri
 }
 
 function vanillaHtmlFilename(slug: string): string {
-  return slug === "/" ? "index.html" : `${slug.replace(/^\//, "").replace(/\//g, "-")}.html`;
+  return slug === "/"
+    ? "index.html"
+    : `${slug.replace(/^\//, "").replace(/\//g, "-")}.html`;
 }
 
 function routerPathForSlug(slug: string): string {
@@ -737,16 +835,21 @@ function replaceHrefAndActionInHtml(
     if (resolved.origin !== siteOrigin) return `${attr}=${quote}${val}${quote}`;
     const targetSlug = pathnameToSlug.get(normalizePathKey(resolved.pathname));
     if (targetSlug === undefined) return `${attr}=${quote}${val}${quote}`;
-    const rep = mode === "vanilla" ? vanillaHtmlFilename(targetSlug) : routerPathForSlug(targetSlug);
+    const rep =
+      mode === "vanilla"
+        ? vanillaHtmlFilename(targetSlug)
+        : routerPathForSlug(targetSlug);
     const out = rep + resolved.hash;
     return `${attr}=${quote}${out}${quote}`;
   };
 
-  let out = html.replace(/\b(href|action)\s*=\s*"([^"]*)"/gi, (_f, attr: string, val: string) =>
-    proc(attr, val, '"'),
+  let out = html.replace(
+    /\b(href|action)\s*=\s*"([^"]*)"/gi,
+    (_f, attr: string, val: string) => proc(attr, val, '"'),
   );
-  out = out.replace(/\b(href|action)\s*=\s*'([^']*)'/gi, (_f, attr: string, val: string) =>
-    proc(attr, val, "'"),
+  out = out.replace(
+    /\b(href|action)\s*=\s*'([^']*)'/gi,
+    (_f, attr: string, val: string) => proc(attr, val, "'"),
   );
   return out;
 }
@@ -759,7 +862,9 @@ function navHrefToRouterTarget(
 ): string | null {
   const trimmed = rawHref.trim();
   if (!trimmed || trimmed.startsWith("#")) return null;
-  const base = sourceUrl.endsWith("/") ? sourceUrl : `${sourceUrl.replace(/\/+$/, "")}/`;
+  const base = sourceUrl.endsWith("/")
+    ? sourceUrl
+    : `${sourceUrl.replace(/\/+$/, "")}/`;
   try {
     const resolved = new URL(trimmed, base);
     if (resolved.origin !== siteOrigin) return null;
@@ -802,7 +907,10 @@ function buildInternalPageAbsoluteUrlMap(
       continue;
     }
     if (u.origin !== siteOrigin) continue;
-    const replacement = mode === "vanilla" ? vanillaHtmlFilename(page.slug) : routerPathForSlug(page.slug);
+    const replacement =
+      mode === "vanilla"
+        ? vanillaHtmlFilename(page.slug)
+        : routerPathForSlug(page.slug);
     const addKey = (key: string) => {
       const k = key.split("#")[0];
       if (map[k] === undefined) map[k] = replacement;
@@ -841,7 +949,11 @@ function normalizeHref(href: string, baseUrl: string): string | null {
 }
 
 /** Drop stylesheet links we already merged into combined / extracted CSS */
-function stripInlinedStylesheetLinks(html: string, baseUrl: string, inlined: string[] | undefined): string {
+function stripInlinedStylesheetLinks(
+  html: string,
+  baseUrl: string,
+  inlined: string[] | undefined,
+): string {
   if (!inlined?.length || !baseUrl) return html;
   const set = new Set(inlined);
   return html.replace(/<link\s[^>]*>/gi, (tag) => {
@@ -856,8 +968,10 @@ function stripInlinedStylesheetLinks(html: string, baseUrl: string, inlined: str
 
 function injectBundledStylesheet(html: string, hrefToInject: string): string {
   const link = `\n<link rel="stylesheet" href="${hrefToInject}" data-extracted-bundle="1" />\n`;
-  if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${link}</head>`);
-  if (/<head[^>]*>/i.test(html)) return html.replace(/<head([^>]*)>/i, `<head$1>${link}`);
+  if (/<\/head>/i.test(html))
+    return html.replace(/<\/head>/i, `${link}</head>`);
+  if (/<head[^>]*>/i.test(html))
+    return html.replace(/<head([^>]*)>/i, `<head$1>${link}`);
   return `<!DOCTYPE html><html><head>${link}</head><body>${html}</body></html>`;
 }
 
@@ -871,7 +985,11 @@ function appendDirToZip(zip: JSZip, srcDir: string, destPrefix: string) {
   }
 }
 
-function appendFaviconsToPrefix(zip: JSZip, jobDir: string, destPrefix: string) {
+function appendFaviconsToPrefix(
+  zip: JSZip,
+  jobDir: string,
+  destPrefix: string,
+) {
   if (!fs.existsSync(jobDir)) return;
   for (const f of fs.readdirSync(jobDir)) {
     if (/^favicon\./i.test(f)) {
@@ -956,17 +1074,27 @@ function normalizeAssetPathsForSpa(html: string): string {
 }
 
 /** Local page-file links (./pages/about.html) → router paths (/about). */
-function localPageLinkMap(pages: PageInfo[], mode: "spa" | "vanilla"): Record<string, string> {
+function localPageLinkMap(
+  pages: PageInfo[],
+  mode: "spa" | "vanilla",
+): Record<string, string> {
   const map: Record<string, string> = {};
   for (const pg of pages) {
-    const safe = pg.slug === "/" ? "index" : pg.slug.replace(/^\//, "").replace(/\//g, "--");
+    const safe =
+      pg.slug === "/"
+        ? "index"
+        : pg.slug.replace(/^\//, "").replace(/\//g, "--");
     const target =
       mode === "spa"
         ? routerPathForSlug(pg.slug)
         : pg.slug === "/"
           ? "./index.html"
           : `./${safe}.html`;
-    for (const variant of [`./pages/${safe}.html`, `../pages/${safe}.html`, `pages/${safe}.html`]) {
+    for (const variant of [
+      `./pages/${safe}.html`,
+      `../pages/${safe}.html`,
+      `pages/${safe}.html`,
+    ]) {
       map[variant] = target;
     }
     if (pg.slug === "/") {
@@ -994,7 +1122,10 @@ function generateComponentArchitecture(
   componentDirRel: string,
   importPrefixFor: (page: PageInfo) => string,
 ): GeneratedArchitecture {
-  const splits = pages.map((pg) => ({ pg, split: splitPageIntoSections(prepareBody(pg)) }));
+  const splits = pages.map((pg) => ({
+    pg,
+    split: splitPageIntoSections(prepareBody(pg)),
+  }));
 
   const keyCount = new Map<string, number>();
   for (const { split } of splits) {
@@ -1019,7 +1150,9 @@ function generateComponentArchitecture(
       const key = sectionContentKey(s.html);
       const existing = emitted.get(key);
       if (existing) {
-        imports.push(`import ${existing.name} from '${importPrefix}/${existing.relPath}';`);
+        imports.push(
+          `import ${existing.name} from '${importPrefix}/${existing.relPath}';`,
+        );
         if (existing.name !== s.name) {
           jsx = jsx.split(`<${s.name} />`).join(`<${existing.name} />`);
         }
@@ -1032,9 +1165,14 @@ function generateComponentArchitecture(
       if (name !== s.name) jsx = jsx.split(`<${s.name} />`).join(`<${name} />`);
 
       const shared = (keyCount.get(key) || 0) >= 2;
-      const relPath = shared ? `shared/${name}.jsx` : `${comp.toLowerCase()}/${name}.jsx`;
+      const relPath = shared
+        ? `shared/${name}.jsx`
+        : `${comp.toLowerCase()}/${name}.jsx`;
       const section: JsxSection = { ...s, name };
-      componentFiles.set(`${componentDirRel}/${relPath}`, sectionComponentSource(section));
+      componentFiles.set(
+        `${componentDirRel}/${relPath}`,
+        sectionComponentSource(section),
+      );
       emitted.set(key, { name, relPath });
       imports.push(`import ${name} from '${importPrefix}/${relPath}';`);
     }
@@ -1101,28 +1239,40 @@ function buildVanillaProject(
   const title = manifest.title || "Extracted Site";
 
   // Preferred path: self-contained standalone pages (CSS + Framer JS runtime
-  // inlined) — exact UI and working interactions straight from index.html.
+  // inlined) - exact UI and working interactions straight from index.html.
   const standaloneDir = path.join(jobDir, "standalone");
   if (fs.existsSync(path.join(standaloneDir, "index.html"))) {
     appendDirToZip(zip, standaloneDir, prefix);
     appendDirToZip(zip, path.join(jobDir, "images"), `${prefix}/images`);
     appendDirToZip(zip, path.join(jobDir, "fonts"), `${prefix}/fonts`);
     appendFaviconsToPrefix(zip, jobDir, prefix);
-    zip.file(p("package.json"), JSON.stringify({
-        name: prefix,
-        version: "1.0.0",
-        description: `Extracted from ${manifest.url} (${pages.length} pages)`,
-        scripts: { start: "npx serve ." },
-        devDependencies: { serve: "^14.2.0" },
-      }, null, 2));
+    zip.file(
+      p("package.json"),
+      JSON.stringify(
+        {
+          name: prefix,
+          version: "1.0.0",
+          description: `Extracted from ${manifest.url} (${pages.length} pages)`,
+          scripts: { start: "npx serve ." },
+          devDependencies: { serve: "^14.2.0" },
+        },
+        null,
+        2,
+      ),
+    );
     const standaloneList = pages
-      .map((pg) => `- [\`${pg.slug}\`](${pg.slug === "/" ? "index.html" : slugToFileName(pg.slug) + ".html"}): ${pg.title}`)
+      .map(
+        (pg) =>
+          `- [\`${pg.slug}\`](${pg.slug === "/" ? "index.html" : slugToFileName(pg.slug) + ".html"}): ${pg.title}`,
+      )
       .join("\n");
-    zip.file(p("README.md"), `# ${title}
+    zip.file(
+      p("README.md"),
+      `# ${title}
 
 Extracted from [${manifest.url}](${manifest.url}) on ${new Date(manifest.createdAt || Date.now()).toLocaleDateString()}.
 
-Every page is **self-contained** — CSS and the site's JavaScript runtime are inlined,
+Every page is **self-contained** - CSS and the site's JavaScript runtime are inlined,
 so animations and interactions work by opening \`index.html\` directly in a browser.
 For clean routing, serve over HTTP:
 
@@ -1135,7 +1285,8 @@ npm start
 ## Pages (${pages.length})
 
 ${standaloneList}
-`);
+`,
+    );
     zip.file(p(".gitignore"), "node_modules/\n.DS_Store\n");
     return;
   }
@@ -1144,29 +1295,47 @@ ${standaloneList}
   const inlined = manifest.inlinedStylesheetUrls as string[] | undefined;
   const framer = siteUsesFramer(manifest, pages);
   const scriptsMirrored =
-    typeof manifest.downloadedAssets?.scripts === "number" && manifest.downloadedAssets.scripts > 0;
+    typeof manifest.downloadedAssets?.scripts === "number" &&
+    manifest.downloadedAssets.scripts > 0;
   let siteOrigin: string | null = null;
   try {
     if (baseUrl) siteOrigin = new URL(baseUrl).origin;
   } catch {
     siteOrigin = null;
   }
-  const pathnameToSlug = siteOrigin ? buildPathnameToSlugMap(pages, siteOrigin) : new Map<string, string>();
-  const internalPageMap = baseUrl ? buildInternalPageAbsoluteUrlMap(pages, baseUrl, "vanilla") : {};
+  const pathnameToSlug = siteOrigin
+    ? buildPathnameToSlugMap(pages, siteOrigin)
+    : new Map<string, string>();
+  const internalPageMap = baseUrl
+    ? buildInternalPageAbsoluteUrlMap(pages, baseUrl, "vanilla")
+    : {};
 
-  let cleanedCss = rewriteUrlsWithMap(cleanCssForEmbed(css), { ...assetMap, ...internalPageMap });
+  let cleanedCss = rewriteUrlsWithMap(cleanCssForEmbed(css), {
+    ...assetMap,
+    ...internalPageMap,
+  });
   if (framer) cleanedCss += framerStaticSnapshotCss();
 
   for (const page of pages) {
     const fname = vanillaHtmlFilename(page.slug);
     let html = page.html;
-    if (baseUrl && inlined?.length) html = stripInlinedStylesheetLinks(html, baseUrl, inlined);
+    if (baseUrl && inlined?.length)
+      html = stripInlinedStylesheetLinks(html, baseUrl, inlined);
     html = rewriteUrlsWithMap(html, assetMap);
     // Zip layout is flat: page-relative prefixes and pages/ subdir links collapse
-    html = html.replace(/(["'(=])(?:\.\.\/)+(images|fonts|scripts|css)\//g, "$1./$2/");
+    html = html.replace(
+      /(["'(=])(?:\.\.\/)+(images|fonts|scripts|css)\//g,
+      "$1./$2/",
+    );
     html = rewriteUrlsWithMap(html, localPageLinkMap(pages, "vanilla"));
     if (siteOrigin) {
-      html = replaceHrefAndActionInHtml(html, page.pageUrl, pathnameToSlug, siteOrigin, "vanilla");
+      html = replaceHrefAndActionInHtml(
+        html,
+        page.pageUrl,
+        pathnameToSlug,
+        siteOrigin,
+        "vanilla",
+      );
     }
     if (framer && !scriptsMirrored) html = applyFramerStaticHtmlFixes(html);
     html = injectBundledStylesheet(html, "./css/extracted-styles.css");
@@ -1179,22 +1348,36 @@ ${standaloneList}
   appendDirToZip(zip, path.join(jobDir, "scripts"), `${prefix}/scripts`);
   appendFaviconsToPrefix(zip, jobDir, prefix);
 
-  zip.file(p("package.json"), JSON.stringify({
-      name: prefix,
-      version: "1.0.0",
-      description: `Extracted from ${manifest.url} (${pages.length} pages)`,
-      scripts: { start: "npx serve ." },
-      devDependencies: { serve: "^14.2.0" },
-    }, null, 2));
+  zip.file(
+    p("package.json"),
+    JSON.stringify(
+      {
+        name: prefix,
+        version: "1.0.0",
+        description: `Extracted from ${manifest.url} (${pages.length} pages)`,
+        scripts: { start: "npx serve ." },
+        devDependencies: { serve: "^14.2.0" },
+      },
+      null,
+      2,
+    ),
+  );
 
-  const pageList = pages.map((pg) => `- [\`${pg.slug}\`](${pg.slug === "/" ? "index.html" : slugToFileName(pg.slug) + ".html"}): ${pg.title}`).join("\n");
+  const pageList = pages
+    .map(
+      (pg) =>
+        `- [\`${pg.slug}\`](${pg.slug === "/" ? "index.html" : slugToFileName(pg.slug) + ".html"}): ${pg.title}`,
+    )
+    .join("\n");
   const platformNote = manifest.platform?.name
     ? `\n> **Note:** This site was originally built with **${manifest.platform.name}**.${manifest.platform.watermarksRemoved ? " Platform watermarks have been removed." : ""}\n`
     : "";
   const framerNote = framer
     ? `\n> **Framer Site:** Framer computes animations via JavaScript at runtime. The \`scripts/\` folder (if present) captures some animation code, but runtime-only effects won't work. The CSS forces static visibility. For animated preview, use the Full Preview (Playwright).\n`
     : "";
-  zip.file(p("README.md"), `# ${title}
+  zip.file(
+    p("README.md"),
+    `# ${title}
 
 Extracted from [${manifest.url}](${manifest.url}) on ${new Date(manifest.createdAt || Date.now()).toLocaleDateString()}.
 ${platformNote}${framerNote}
@@ -1226,7 +1409,10 @@ ${prefix}/
 ├── metadata/
 │   └── extraction-summary.json  # Small stats only
 ├── index.html              # Homepage
-${pages.filter((pg) => pg.slug !== "/").map((pg) => `├── ${slugToFileName(pg.slug)}.html  # ${pg.title}`).join("\n")}
+${pages
+  .filter((pg) => pg.slug !== "/")
+  .map((pg) => `├── ${slugToFileName(pg.slug)}.html  # ${pg.title}`)
+  .join("\n")}
 ├── css/
 │   └── extracted-styles.css  # Combined / inlined CSS (+ fallback note if JS-driven)
 ├── scripts/                  # Mirrored JS/MJS when captured (Playwright network + <script src>)
@@ -1248,7 +1434,8 @@ Upload the entire folder to any static hosting:
 - **Netlify:** Drag & drop the folder to [app.netlify.com/drop](https://app.netlify.com/drop)
 - **Vercel:** \`npx vercel --prod\`
 - **GitHub Pages:** Push to a repo and enable Pages in Settings
-`);
+`,
+  );
   zip.file(p(".gitignore"), "node_modules/\n.DS_Store\n");
 }
 
@@ -1313,7 +1500,9 @@ async function buildReactProject(
 
   const sourceUrl = typeof manifest.url === "string" ? manifest.url : "";
   const title = manifest.title || "Extracted Site";
-  const googleFontsLinks = extractGoogleFontsLinks(headContent || pages[0]?.html || "");
+  const googleFontsLinks = extractGoogleFontsLinks(
+    headContent || pages[0]?.html || "",
+  );
   const navItems = extractNavItems(pages[0]?.html || "");
   const assetMap = loadAssetMap(jobDir);
   const publicMap = mapToPublicPaths(assetMap);
@@ -1324,8 +1513,12 @@ async function buildReactProject(
   } catch {
     siteOrigin = "";
   }
-  const pathnameToSlug = siteOrigin ? buildPathnameToSlugMap(pages, siteOrigin) : new Map<string, string>();
-  const internalPageMap = sourceUrl ? buildInternalPageAbsoluteUrlMap(pages, sourceUrl, "spa") : {};
+  const pathnameToSlug = siteOrigin
+    ? buildPathnameToSlugMap(pages, siteOrigin)
+    : new Map<string, string>();
+  const internalPageMap = sourceUrl
+    ? buildInternalPageAbsoluteUrlMap(pages, sourceUrl, "spa")
+    : {};
 
   // Head-only <style> blocks hold CSS vars/keyframes invisible to body dangerouslySetInnerHTML
   const seenHeadStyles = new Set<string>();
@@ -1333,14 +1526,21 @@ async function buildReactProject(
   for (const page of pages) {
     for (const block of extractHeadStyleBlocks(page.html)) {
       const key = block.slice(0, 120);
-      if (!seenHeadStyles.has(key)) { seenHeadStyles.add(key); headStyleChunks.push(block); }
+      if (!seenHeadStyles.has(key)) {
+        seenHeadStyles.add(key);
+        headStyleChunks.push(block);
+      }
     }
   }
-  const headStylesCss = headStyleChunks.length > 0
-    ? `\n\n/* ─── <head> style blocks (CSS vars, keyframes, resets) ─── */\n${headStyleChunks.join("\n\n")}`
-    : "";
+  const headStylesCss =
+    headStyleChunks.length > 0
+      ? `\n\n/* ─── <head> style blocks (CSS vars, keyframes, resets) ─── */\n${headStyleChunks.join("\n\n")}`
+      : "";
 
-  let cssForZip = rewriteUrlsWithMap(cleanCssForReactNext(css), { ...publicMap, ...internalPageMap });
+  let cssForZip = rewriteUrlsWithMap(cleanCssForReactNext(css), {
+    ...publicMap,
+    ...internalPageMap,
+  });
   if (framer) cssForZip += framerStaticSnapshotCss();
   cssForZip += REACT_NEXT_VIEWPORT_SHELL_CSS;
   cssForZip += headStylesCss;
@@ -1357,7 +1557,9 @@ async function buildReactProject(
     })
     .join("\n");
 
-  const headLinkDesc = parseHeadLinkDescriptors(reactHeadLinkSources(jobDir, homeHtml));
+  const headLinkDesc = parseHeadLinkDescriptors(
+    reactHeadLinkSources(jobDir, homeHtml),
+  );
 
   const detectedDeps = detectNpmDependencies(pages, css, manifest, "react");
 
@@ -1397,11 +1599,12 @@ async function buildReactProject(
   );
 
   const scriptTagsBlock = scriptTags ? `\n${scriptTags}` : "";
-  const headLinksOutput = headLinkDesc.length > 0
-    ? `${headLinkDesc.map(formatHeadLinkTagForHtml).join("\n")}\n`
-    : googleFontsLinks.length > 0
-      ? `    <link rel="preconnect" href="https://fonts.googleapis.com" />\n    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />\n${googleFontsLinks.map((u) => `    <link href=${JSON.stringify(u)} rel="stylesheet" />`).join("\n")}\n`
-      : "";
+  const headLinksOutput =
+    headLinkDesc.length > 0
+      ? `${headLinkDesc.map(formatHeadLinkTagForHtml).join("\n")}\n`
+      : googleFontsLinks.length > 0
+        ? `    <link rel="preconnect" href="https://fonts.googleapis.com" />\n    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />\n${googleFontsLinks.map((u) => `    <link href=${JSON.stringify(u)} rel="stylesheet" />`).join("\n")}\n`
+        : "";
   const headWithScripts = scriptTagsBlock
     ? `${headLinksOutput}${scriptTagsBlock}`
     : headLinksOutput;
@@ -1438,7 +1641,12 @@ async function buildReactProject(
           .map((n) => {
             const to =
               siteOrigin && sourceUrl
-                ? navHrefToRouterTarget(n.href, sourceUrl, pathnameToSlug, siteOrigin)
+                ? navHrefToRouterTarget(
+                    n.href,
+                    sourceUrl,
+                    pathnameToSlug,
+                    siteOrigin,
+                  )
                 : null;
             const target = to ?? n.href;
             return `          <Link to={${JSON.stringify(target)}} className="nav-link">${n.label}</Link>`;
@@ -1447,10 +1655,15 @@ async function buildReactProject(
       : pages
           .filter((pg) => pg.slug !== "/")
           .slice(0, 6)
-          .map((pg) => `          <Link to={${JSON.stringify(pg.slug)}} className="nav-link">${pg.title}</Link>`)
+          .map(
+            (pg) =>
+              `          <Link to={${JSON.stringify(pg.slug)}} className="nav-link">${pg.title}</Link>`,
+          )
           .join("\n");
 
-  const animInitImport = hasAnimationScripts ? `import AnimationInit from './components/AnimationInit.jsx';\n` : "";
+  const animInitImport = hasAnimationScripts
+    ? `import AnimationInit from './components/AnimationInit.jsx';\n`
+    : "";
   const animInitJsx = hasAnimationScripts ? `      <AnimationInit />\n` : "";
   add(
     "src/App.jsx",
@@ -1466,14 +1679,20 @@ async function buildReactProject(
     `import { Link } from 'react-router-dom';\n\nexport default function NotFoundPage() {\n  return (\n    <div style={{ minHeight: '50vh', textAlign: 'center', padding: '3rem 1rem' }}>\n      <h1>404</h1>\n      <p>Page not found.</p>\n      <Link to="/">Go home</Link>\n    </div>\n  );\n}\n`,
   );
 
-  // Build page components — deterministic HTML → JSX conversion. Every section
+  // Build page components - deterministic HTML → JSX conversion. Every section
   // becomes a real component file with the markup inline (no AI, no HTML blobs).
   add("src/lib/useInternalNavigation.js", USE_INTERNAL_NAVIGATION_REACT);
 
   const prepareReactBody = (page: PageInfo): string => {
     let body = rewriteUrlsWithMap(page.bodyContent, publicMap);
     if (siteOrigin && sourceUrl) {
-      body = replaceHrefAndActionInHtml(body, page.pageUrl, pathnameToSlug, siteOrigin, "spa");
+      body = replaceHrefAndActionInHtml(
+        body,
+        page.pageUrl,
+        pathnameToSlug,
+        siteOrigin,
+        "spa",
+      );
     }
     body = normalizeAssetPathsForSpa(body);
     body = rewriteUrlsWithMap(body, localPageLinkMap(pages, "spa"));
@@ -1515,7 +1734,10 @@ ${body.jsx.replace(/\s+$/, "")}
   }
 
   const pageListReact = pages
-    .map((pg) => `  - [\`${pg.slug}\`](${reactPageComponentPath(pg.slug)}): ${pg.title}`)
+    .map(
+      (pg) =>
+        `  - [\`${pg.slug}\`](${reactPageComponentPath(pg.slug)}): ${pg.title}`,
+    )
     .join("\n");
   const platformNoteReact = manifest.platform?.name
     ? `\n> **Note:** This site was originally built with **${manifest.platform.name}**.${manifest.platform.watermarksRemoved ? " Platform watermarks have been removed." : ""}\n`
@@ -1524,9 +1746,10 @@ ${body.jsx.replace(/\s+$/, "")}
     ? `\n> **Framer Site:** Framer computes animations via JS at runtime. This static export forces visible text via CSS. For animated clone, use the Full Preview or add framer-motion manually.\n`
     : "";
 
-  const depNotesSectionReact = detectedDeps.notes.length > 0
-    ? `\n## Detected Libraries\n\n${detectedDeps.notes.map((n) => `- ${n}`).join("\n")}\n`
-    : "";
+  const depNotesSectionReact =
+    detectedDeps.notes.length > 0
+      ? `\n## Detected Libraries\n\n${detectedDeps.notes.map((n) => `- ${n}`).join("\n")}\n`
+      : "";
 
   add(
     "README.md",
@@ -1553,10 +1776,10 @@ ${pageListReact}
 
 ## Project structure
 
-- \`src/pages/\` — one component per page, composing its sections
-- \`src/components/shared/\` — sections repeated across pages (header, footer)
-- \`src/components/<page>/\` — sections unique to a page
-- \`src/styles/global.css\` — extracted site CSS, imported once from \`src/main.jsx\`
+- \`src/pages/\` - one component per page, composing its sections
+- \`src/components/shared/\` - sections repeated across pages (header, footer)
+- \`src/components/<page>/\` - sections unique to a page
+- \`src/styles/global.css\` - extracted site CSS, imported once from \`src/main.jsx\`
 `,
   );
 
@@ -1592,7 +1815,9 @@ async function buildNextProject(
 
   const sourceUrl = typeof manifest.url === "string" ? manifest.url : "";
   const title = manifest.title || "Extracted Site";
-  const googleFontsLinks = extractGoogleFontsLinks(headContent || pages[0]?.html || "");
+  const googleFontsLinks = extractGoogleFontsLinks(
+    headContent || pages[0]?.html || "",
+  );
   const navItems = extractNavItems(pages[0]?.html || "");
   const assetMap = loadAssetMap(jobDir);
   const publicMap = mapToPublicPaths(assetMap);
@@ -1606,7 +1831,9 @@ async function buildNextProject(
   const pathnameToSlugNext = siteOriginNext
     ? buildPathnameToSlugMap(pages, siteOriginNext)
     : new Map<string, string>();
-  const internalPageMapNext = sourceUrl ? buildInternalPageAbsoluteUrlMap(pages, sourceUrl, "spa") : {};
+  const internalPageMapNext = sourceUrl
+    ? buildInternalPageAbsoluteUrlMap(pages, sourceUrl, "spa")
+    : {};
 
   // Head-only <style> blocks hold CSS vars/keyframes invisible to body dangerouslySetInnerHTML
   const seenHeadStylesNext = new Set<string>();
@@ -1614,14 +1841,21 @@ async function buildNextProject(
   for (const page of pages) {
     for (const block of extractHeadStyleBlocks(page.html)) {
       const key = block.slice(0, 120);
-      if (!seenHeadStylesNext.has(key)) { seenHeadStylesNext.add(key); headStyleChunksNext.push(block); }
+      if (!seenHeadStylesNext.has(key)) {
+        seenHeadStylesNext.add(key);
+        headStyleChunksNext.push(block);
+      }
     }
   }
-  const headStylesCssNext = headStyleChunksNext.length > 0
-    ? `\n\n/* ─── <head> style blocks (CSS vars, keyframes, resets) ─── */\n${headStyleChunksNext.join("\n\n")}`
-    : "";
+  const headStylesCssNext =
+    headStyleChunksNext.length > 0
+      ? `\n\n/* ─── <head> style blocks (CSS vars, keyframes, resets) ─── */\n${headStyleChunksNext.join("\n\n")}`
+      : "";
 
-  let cssForZip = rewriteUrlsWithMap(cleanCssForReactNext(css), { ...publicMap, ...internalPageMapNext });
+  let cssForZip = rewriteUrlsWithMap(cleanCssForReactNext(css), {
+    ...publicMap,
+    ...internalPageMapNext,
+  });
   if (framer) cssForZip += framerStaticSnapshotCss();
   cssForZip += REACT_NEXT_VIEWPORT_SHELL_CSS;
   cssForZip += headStylesCssNext;
@@ -1629,12 +1863,22 @@ async function buildNextProject(
 
   // External CDN scripts that drive animations
   const homeHtmlNext = pages[0]?.html || "";
-  const externalScriptsNext = extractExternalScriptUrls(homeHtmlNext, siteOriginNext);
+  const externalScriptsNext = extractExternalScriptUrls(
+    homeHtmlNext,
+    siteOriginNext,
+  );
   const hasAnimationScriptsNext = externalScriptsNext.length > 0;
 
-  const headLinkDesc = parseHeadLinkDescriptors(reactHeadLinkSources(jobDir, homeHtmlNext));
+  const headLinkDesc = parseHeadLinkDescriptors(
+    reactHeadLinkSources(jobDir, homeHtmlNext),
+  );
 
-  const detectedDepsNext = detectNpmDependencies(pages, css, manifest, "nextjs");
+  const detectedDepsNext = detectNpmDependencies(
+    pages,
+    css,
+    manifest,
+    "nextjs",
+  );
 
   add(
     "package.json",
@@ -1665,9 +1909,10 @@ async function buildNextProject(
   );
 
   const remoteHostnames = extractImageRemoteHostnames(assetMap);
-  const remotePatternsCode = remoteHostnames.length > 0
-    ? `  images: {\n    remotePatterns: [\n${remoteHostnames.map((h) => `      { protocol: 'https', hostname: ${JSON.stringify(h)} },`).join("\n")}\n    ],\n  },\n`
-    : "";
+  const remotePatternsCode =
+    remoteHostnames.length > 0
+      ? `  images: {\n    remotePatterns: [\n${remoteHostnames.map((h) => `      { protocol: 'https', hostname: ${JSON.stringify(h)} },`).join("\n")}\n    ],\n  },\n`
+      : "";
   add(
     "next.config.mjs",
     `/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  reactStrictMode: true,\n${remotePatternsCode}};\nexport default nextConfig;\n`,
@@ -1683,8 +1928,12 @@ async function buildNextProject(
         ? `/* Google Fonts: ${googleFontsLinks.join(", ")} */\n`
         : "";
 
-  const animInitImportNext = hasAnimationScriptsNext ? `import AnimationInit from '../components/AnimationInit.jsx';\n` : "";
-  const animInitJsxNext = hasAnimationScriptsNext ? `      <AnimationInit />\n` : "";
+  const animInitImportNext = hasAnimationScriptsNext
+    ? `import AnimationInit from '../components/AnimationInit.jsx';\n`
+    : "";
+  const animInitJsxNext = hasAnimationScriptsNext
+    ? `      <AnimationInit />\n`
+    : "";
   add(
     "pages/_app.js",
     `${fontsComment}import '../styles/globals.css';\nimport Head from 'next/head';\n${animInitImportNext}\nexport default function App({ Component, pageProps }) {\n  return (\n    <>\n      <Head>\n${headInject || "        {/* no extra head links */}"}\n      </Head>\n${animInitJsxNext}      <Component {...pageProps} />\n    </>\n  );\n}\n`,
@@ -1699,7 +1948,7 @@ async function buildNextProject(
     `import Head from 'next/head';\nimport Link from 'next/link';\n\nexport default function Custom404() {\n  return (\n    <>\n      <Head>\n        <title>404: Not found</title>\n        <meta name="robots" content="noindex" />\n      </Head>\n      <div style={{ minHeight: '50vh', textAlign: 'center', padding: '3rem 1rem' }}>\n        <h1>404</h1>\n        <p>Page not found.</p>\n        <Link href="/">Go home</Link>\n      </div>\n    </>\n  );\n}\n`,
   );
 
-  // _document.js — inject external CDN animation/library scripts globally
+  // _document.js - inject external CDN animation/library scripts globally
   if (externalScriptsNext.length > 0) {
     const docScriptTags = externalScriptsNext
       .map((s) => {
@@ -1713,14 +1962,20 @@ async function buildNextProject(
     );
   }
 
-  // Build page components — deterministic HTML → JSX conversion. Every section
+  // Build page components - deterministic HTML → JSX conversion. Every section
   // becomes a real component file with the markup inline (no AI, no HTML blobs).
   add("components/useInternalNavigation.js", USE_INTERNAL_NAVIGATION_NEXT);
 
   const prepareNextBody = (page: PageInfo): string => {
     let body = rewriteUrlsWithMap(page.bodyContent, publicMap);
     if (siteOriginNext && sourceUrl) {
-      body = replaceHrefAndActionInHtml(body, page.pageUrl, pathnameToSlugNext, siteOriginNext, "spa");
+      body = replaceHrefAndActionInHtml(
+        body,
+        page.pageUrl,
+        pathnameToSlugNext,
+        siteOriginNext,
+        "spa",
+      );
     }
     body = normalizeAssetPathsForSpa(body);
     body = rewriteUrlsWithMap(body, localPageLinkMap(pages, "spa"));
@@ -1751,7 +2006,9 @@ async function buildNextProject(
     const rel = nextPagesFileRel(page.slug);
     const depth = rel.split("/").length - 1;
     const navImport = `${"../".repeat(depth)}components/useInternalNavigation.js`;
-    const pageTitleLit = JSON.stringify(page.title || extractTitle(page.html) || title);
+    const pageTitleLit = JSON.stringify(
+      page.title || extractTitle(page.html) || title,
+    );
     const pageDescLit = JSON.stringify(extractMetaDescription(page.html));
     const body = architectureNext.pageBodies.get(page.slug);
     if (!body) continue;
@@ -1782,15 +2039,18 @@ ${body.jsx.replace(/\s+$/, "")}
   }
 
   const pageListNext = pages
-    .map((pg) => `  - [\`${pg.slug}\`](${nextPagesFileRel(pg.slug)}): ${pg.title}`)
+    .map(
+      (pg) => `  - [\`${pg.slug}\`](${nextPagesFileRel(pg.slug)}): ${pg.title}`,
+    )
     .join("\n");
   const platformNoteNext = manifest.platform?.name
     ? `\n> **Note:** This site was originally built with **${manifest.platform.name}**.${manifest.platform.watermarksRemoved ? " Platform watermarks have been removed." : ""}\n`
     : "";
 
-  const depNotesSectionNext = detectedDepsNext.notes.length > 0
-    ? `\n## Detected Libraries\n\n${detectedDepsNext.notes.map((n) => `- ${n}`).join("\n")}\n`
-    : "";
+  const depNotesSectionNext =
+    detectedDepsNext.notes.length > 0
+      ? `\n## Detected Libraries\n\n${detectedDepsNext.notes.map((n) => `- ${n}`).join("\n")}\n`
+      : "";
 
   add(
     "README.md",
@@ -1811,10 +2071,10 @@ ${pageListNext}
 
 ## Project structure
 
-- \`pages/\` — one component per page (Pages Router, no \`app/\` directory)
-- \`components/shared/\` — sections repeated across pages (header, footer)
-- \`components/<page>/\` — sections unique to a page
-- \`styles/globals.css\` — extracted site CSS, imported once from \`pages/_app.js\`
+- \`pages/\` - one component per page (Pages Router, no \`app/\` directory)
+- \`components/shared/\` - sections repeated across pages (header, footer)
+- \`components/<page>/\` - sections unique to a page
+- \`styles/globals.css\` - extracted site CSS, imported once from \`pages/_app.js\`
 `,
   );
 
@@ -1863,7 +2123,10 @@ async function appendAiEnhancementsToZip(
       pack.summary,
       "",
       "## Files",
-      ...pack.files.map((file) => `- \`${file.path}\`${file.purpose ? `: ${file.purpose}` : ""}`),
+      ...pack.files.map(
+        (file) =>
+          `- \`${file.path}\`${file.purpose ? `: ${file.purpose}` : ""}`,
+      ),
     ].join("\n"),
   );
 
@@ -1886,24 +2149,38 @@ async function appendAiEnhancementsToZip(
   );
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  if (req.method !== "GET")
+    return res.status(405).json({ error: "Method not allowed" });
 
   const { id, framework, ai } = req.query;
-  if (!id || typeof id !== "string") return res.status(400).json({ error: "Job ID required" });
+  if (!id || typeof id !== "string")
+    return res.status(400).json({ error: "Job ID required" });
 
   const jobDir = path.join(JOBS_DIR, id);
   const manifestPath = path.join(jobDir, "manifest.json");
 
-  if (!fs.existsSync(manifestPath)) return res.status(404).json({ error: "Job not found" });
+  if (!fs.existsSync(manifestPath))
+    return res.status(404).json({ error: "Job not found" });
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-  const fwParam = (typeof framework === "string" ? framework : "vanilla").toLowerCase();
-  const pages = loadPages(jobDir, manifest, fwParam === "react" || fwParam === "nextjs" ? "pages-rendered" : "pages");
+  const fwParam = (
+    typeof framework === "string" ? framework : "vanilla"
+  ).toLowerCase();
+  const pages = loadPages(
+    jobDir,
+    manifest,
+    fwParam === "react" || fwParam === "nextjs" ? "pages-rendered" : "pages",
+  );
   const css = gatherBundleCss(jobDir, pages);
   const headContent = loadHeadContent(jobDir);
 
-  const fw = (typeof framework === "string" ? framework : "vanilla").toLowerCase();
+  const fw = (
+    typeof framework === "string" ? framework : "vanilla"
+  ).toLowerCase();
   const aiEnhanced = ai === "1" || ai === "true";
   const projectName = safeFileName(manifest.title || "extracted-site");
   const prefix = `${projectName}-${fw}${aiEnhanced ? "-ai" : ""}`;
@@ -1916,10 +2193,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (fw) {
       case "react":
-        await buildReactProject(zip, pages, css, manifest, prefix, headContent, jobDir);
+        await buildReactProject(
+          zip,
+          pages,
+          css,
+          manifest,
+          prefix,
+          headContent,
+          jobDir,
+        );
         break;
       case "nextjs":
-        await buildNextProject(zip, pages, css, manifest, prefix, headContent, jobDir);
+        await buildNextProject(
+          zip,
+          pages,
+          css,
+          manifest,
+          prefix,
+          headContent,
+          jobDir,
+        );
         break;
       default:
         buildVanillaProject(zip, pages, css, manifest, prefix, jobDir);

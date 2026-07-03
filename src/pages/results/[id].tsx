@@ -35,7 +35,7 @@ import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { SiteSeo } from "@/components/site-seo";
 import { SITE_DESCRIPTION } from "@/lib/site-config";
 
-const serif = "var(--font-display)"; // display face (Mona Sans) — legacy variable name
+const serif = "var(--font-display)"; // display face (Mona Sans) - legacy variable name
 
 interface CrawledPage {
   slug: string;
@@ -77,22 +77,42 @@ interface FileNode {
 }
 
 const frameworks = [
-  { id: "vanilla", label: "Vanilla HTML", desc: "All pages as separate HTML files with extracted CSS" },
-  { id: "react", label: "React + Vite", desc: "React Router with per-page components and real CSS" },
-  { id: "nextjs", label: "Next.js 15", desc: "App Router with file-based routing and extracted styles" },
+  {
+    id: "vanilla",
+    label: "Vanilla HTML",
+    desc: "All pages as separate HTML files with extracted CSS",
+  },
+  {
+    id: "react",
+    label: "React + Vite",
+    desc: "React Router with per-page components and real CSS",
+  },
+  {
+    id: "nextjs",
+    label: "Next.js 15",
+    desc: "App Router with file-based routing and extracted styles",
+  },
 ] as const;
 
 type Framework = (typeof frameworks)[number]["id"];
 
 function fileIcon(name: string) {
-  if (/\.tsx?$/.test(name)) return <FileCode2 className="h-3.5 w-3.5 text-blue-500" />;
-  if (/\.css$/.test(name)) return <Paintbrush className="h-3.5 w-3.5 text-pink-500" />;
-  if (/\.html$/.test(name)) return <FileCode2 className="h-3.5 w-3.5 text-orange-500" />;
-  if (/\.json$/.test(name)) return <FileText className="h-3.5 w-3.5 text-amber-500" />;
-  if (/\.m?js$/.test(name)) return <Code2 className="h-3.5 w-3.5 text-yellow-500" />;
-  if (/\.(png|jpg|jpeg|svg|gif|webp)$/i.test(name)) return <ImageIcon className="h-3.5 w-3.5 text-emerald-500" />;
-  if (/\.(woff2?|ttf|otf|eot)$/i.test(name)) return <Type className="h-3.5 w-3.5 text-purple-500" />;
-  if (/\.md$/.test(name)) return <FileText className="h-3.5 w-3.5 text-foreground/40" />;
+  if (/\.tsx?$/.test(name))
+    return <FileCode2 className="h-3.5 w-3.5 text-blue-500" />;
+  if (/\.css$/.test(name))
+    return <Paintbrush className="h-3.5 w-3.5 text-pink-500" />;
+  if (/\.html$/.test(name))
+    return <FileCode2 className="h-3.5 w-3.5 text-orange-500" />;
+  if (/\.json$/.test(name))
+    return <FileText className="h-3.5 w-3.5 text-amber-500" />;
+  if (/\.m?js$/.test(name))
+    return <Code2 className="h-3.5 w-3.5 text-yellow-500" />;
+  if (/\.(png|jpg|jpeg|svg|gif|webp)$/i.test(name))
+    return <ImageIcon className="h-3.5 w-3.5 text-emerald-500" />;
+  if (/\.(woff2?|ttf|otf|eot)$/i.test(name))
+    return <Type className="h-3.5 w-3.5 text-purple-500" />;
+  if (/\.md$/.test(name))
+    return <FileText className="h-3.5 w-3.5 text-foreground/40" />;
   return <File className="h-3.5 w-3.5 text-foreground/30" />;
 }
 
@@ -202,17 +222,36 @@ interface AiBuildResult {
 }
 
 function ValCheckIcon({ status }: { status: ValidationCheck["status"] }) {
-  if (status === "pass") return <CircleCheck className="h-4 w-4 text-emerald-500" />;
-  if (status === "warn") return <CircleAlert className="h-4 w-4 text-amber-500" />;
+  if (status === "pass")
+    return <CircleCheck className="h-4 w-4 text-emerald-500" />;
+  if (status === "warn")
+    return <CircleAlert className="h-4 w-4 text-amber-500" />;
   return <CircleX className="h-4 w-4 text-red-500" />;
 }
 
 function ValStatusBadge({ result }: { result: ValidationResult }) {
-  const Icon = result.status === "healthy" ? ShieldCheck : result.status === "minor-issues" ? ShieldAlert : ShieldX;
-  const color = result.status === "healthy" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/25" : result.status === "minor-issues" ? "text-amber-300 bg-amber-500/10 border-amber-500/25" : "text-red-300 bg-red-500/10 border-red-500/25";
-  const label = result.status === "healthy" ? "Ready to download" : result.status === "minor-issues" ? "Minor issues" : "Issues found";
+  const Icon =
+    result.status === "healthy"
+      ? ShieldCheck
+      : result.status === "minor-issues"
+        ? ShieldAlert
+        : ShieldX;
+  const color =
+    result.status === "healthy"
+      ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/25"
+      : result.status === "minor-issues"
+        ? "text-amber-300 bg-amber-500/10 border-amber-500/25"
+        : "text-red-300 bg-red-500/10 border-red-500/25";
+  const label =
+    result.status === "healthy"
+      ? "Ready to download"
+      : result.status === "minor-issues"
+        ? "Minor issues"
+        : "Issues found";
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${color}`}>
+    <div
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${color}`}
+    >
       <Icon className="h-3.5 w-3.5" />
       {result.score}% · {label}
     </div>
@@ -286,15 +325,41 @@ export default function ResultsPage() {
 
   const assetCategories = manifest
     ? [
-        { icon: FileCode2, label: "Crawled Pages", count: manifest.pages, items: crawledPageItems },
-        { icon: Paintbrush, label: "Stylesheets", count: manifest.stylesheets, items: manifest.assets.stylesheets },
-        { icon: ImageIcon, label: "Images", count: manifest.images, items: manifest.assets.images },
-        { icon: Code2, label: "Scripts", count: manifest.scripts, items: manifest.assets.scripts },
-        { icon: Type, label: "Fonts", count: manifest.fonts, items: manifest.assets.fonts },
+        {
+          icon: FileCode2,
+          label: "Crawled Pages",
+          count: manifest.pages,
+          items: crawledPageItems,
+        },
+        {
+          icon: Paintbrush,
+          label: "Stylesheets",
+          count: manifest.stylesheets,
+          items: manifest.assets.stylesheets,
+        },
+        {
+          icon: ImageIcon,
+          label: "Images",
+          count: manifest.images,
+          items: manifest.assets.images,
+        },
+        {
+          icon: Code2,
+          label: "Scripts",
+          count: manifest.scripts,
+          items: manifest.assets.scripts,
+        },
+        {
+          icon: Type,
+          label: "Fonts",
+          count: manifest.fonts,
+          items: manifest.assets.fonts,
+        },
       ]
     : [];
 
-  const fixableChecks = validation?.checks.filter((c) => c.fixable && c.status !== "pass") || [];
+  const fixableChecks =
+    validation?.checks.filter((c) => c.fixable && c.status !== "pass") || [];
 
   async function runValidation() {
     if (!manifest) return;
@@ -302,7 +367,9 @@ export default function ResultsPage() {
     setShowValidation(false);
     setFixLog([]);
     try {
-      const r = await fetch(`/api/validate/${manifest.id}?framework=${selectedFw}`);
+      const r = await fetch(
+        `/api/validate/${manifest.id}?framework=${selectedFw}`,
+      );
       const data: ValidationResult = await r.json();
       setValidation(data);
       setShowValidation(true);
@@ -332,8 +399,13 @@ export default function ResultsPage() {
       const data = await r.json();
       const logs: string[] = [];
       if (data.actions) {
-        for (const a of data.actions as { label: string; appliedTo: number }[]) {
-          logs.push(`✓ ${a.label} (${a.appliedTo} file${a.appliedTo !== 1 ? "s" : ""})`);
+        for (const a of data.actions as {
+          label: string;
+          appliedTo: number;
+        }[]) {
+          logs.push(
+            `✓ ${a.label} (${a.appliedTo} file${a.appliedTo !== 1 ? "s" : ""})`,
+          );
         }
       }
       setFixLog(logs);
@@ -359,7 +431,12 @@ export default function ResultsPage() {
       });
       const data = await r.json();
       if (data.actions) {
-        setFixLog(data.actions.map((a: { label: string; appliedTo: number }) => `✓ ${a.label} (${a.appliedTo} file${a.appliedTo !== 1 ? "s" : ""})`));
+        setFixLog(
+          data.actions.map(
+            (a: { label: string; appliedTo: number }) =>
+              `✓ ${a.label} (${a.appliedTo} file${a.appliedTo !== 1 ? "s" : ""})`,
+          ),
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 300));
       await runValidation();
@@ -390,7 +467,9 @@ export default function ResultsPage() {
       }
       setAiBuild(data);
     } catch (error) {
-      setAiBuildError(error instanceof Error ? error.message : "AI framework build failed");
+      setAiBuildError(
+        error instanceof Error ? error.message : "AI framework build failed",
+      );
     } finally {
       setAiBuilding(false);
     }
@@ -412,7 +491,9 @@ export default function ResultsPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "AI starter pack failed");
+        throw new Error(
+          (data as { error?: string }).error || "AI starter pack failed",
+        );
       }
 
       const blob = await response.blob();
@@ -425,7 +506,9 @@ export default function ResultsPage() {
       anchor.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      setAiFilesError(error instanceof Error ? error.message : "AI starter pack failed");
+      setAiFilesError(
+        error instanceof Error ? error.message : "AI starter pack failed",
+      );
     } finally {
       setAiFilesLoading(false);
     }
@@ -461,7 +544,11 @@ export default function ResultsPage() {
               <div>
                 <h1
                   className="text-2xl text-foreground md:text-3xl"
-                  style={{ fontFamily: serif, fontWeight: 500, letterSpacing: "-1.2px" }}
+                  style={{
+                    fontFamily: serif,
+                    fontWeight: 500,
+                    letterSpacing: "-1.2px",
+                  }}
                 >
                   Extraction results.
                 </h1>
@@ -531,7 +618,10 @@ export default function ResultsPage() {
                     key={s.label}
                     className="rounded-xl border border-border/60 bg-muted/20 p-4 text-center"
                   >
-                    <p className="text-2xl font-semibold text-foreground" style={{ fontFamily: serif }}>
+                    <p
+                      className="text-2xl font-semibold text-foreground"
+                      style={{ fontFamily: serif }}
+                    >
                       {s.value}
                     </p>
                     <p className="text-xs text-foreground/45">{s.label}</p>
@@ -572,12 +662,18 @@ export default function ResultsPage() {
                 transition={{ delay: 0.1 }}
                 className="mt-8"
               >
-                <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground" style={{ fontFamily: serif }}>
+                <h2
+                  className="mb-4 text-lg font-semibold tracking-tight text-foreground"
+                  style={{ fontFamily: serif }}
+                >
                   Extracted files
                 </h2>
                 <div className="space-y-3">
                   {assetCategories.map((cat) => (
-                    <details key={cat.label} className="group rounded-xl border border-input bg-card">
+                    <details
+                      key={cat.label}
+                      className="group rounded-xl border border-input bg-card"
+                    >
                       <summary className="flex cursor-pointer items-center justify-between px-5 py-4 text-sm font-medium text-foreground">
                         <span className="flex items-center gap-3">
                           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/5">
@@ -591,17 +687,24 @@ export default function ResultsPage() {
                       </summary>
                       <div className="border-t border-border/40 px-5 py-3">
                         {cat.items.length === 0 ? (
-                          <p className="text-xs text-foreground/40">No files found</p>
+                          <p className="text-xs text-foreground/40">
+                            No files found
+                          </p>
                         ) : (
                           <ul className="max-h-48 space-y-1 overflow-y-auto">
                             {cat.items.slice(0, 20).map((item, i) => (
-                              <li key={i} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-foreground/55 transition-colors hover:bg-muted hover:text-foreground">
+                              <li
+                                key={i}
+                                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-foreground/55 transition-colors hover:bg-muted hover:text-foreground"
+                              >
                                 <FileText className="h-3 w-3 shrink-0" />
                                 <span className="truncate">{item}</span>
                               </li>
                             ))}
                             {cat.items.length > 20 && (
-                              <li className="px-2 py-1.5 text-xs text-foreground/40">+{cat.items.length - 20} more...</li>
+                              <li className="px-2 py-1.5 text-xs text-foreground/40">
+                                +{cat.items.length - 20} more...
+                              </li>
                             )}
                           </ul>
                         )}
@@ -618,11 +721,15 @@ export default function ResultsPage() {
                 transition={{ delay: 0.15 }}
                 className="mt-10"
               >
-                <h2 className="mb-2 text-lg font-semibold tracking-tight text-foreground" style={{ fontFamily: serif }}>
+                <h2
+                  className="mb-2 text-lg font-semibold tracking-tight text-foreground"
+                  style={{ fontFamily: serif }}
+                >
                   Generate project
                 </h2>
                 <p className="mb-6 text-sm text-foreground/50">
-                  All {manifest.pages} crawled pages will be converted to routes with real content and the original CSS included.
+                  All {manifest.pages} crawled pages will be converted to routes
+                  with real content and the original CSS included.
                 </p>
 
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -651,8 +758,12 @@ export default function ResultsPage() {
                           <Check className="h-3 w-3" />
                         </span>
                       )}
-                      <p className="text-sm font-semibold text-foreground">{fw.label}</p>
-                      <p className="mt-1 text-xs text-foreground/45">{fw.desc}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {fw.label}
+                      </p>
+                      <p className="mt-1 text-xs text-foreground/45">
+                        {fw.desc}
+                      </p>
                     </motion.button>
                   ))}
                 </div>
@@ -670,7 +781,9 @@ export default function ResultsPage() {
                     <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
                       <div className="flex items-center gap-2">
                         <Folder className="h-4 w-4 text-foreground/40" />
-                        <p className="text-sm font-medium text-foreground">Project structure</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Project structure
+                        </p>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-foreground/40">
                         <span>{counts.folders} folders</span>
@@ -685,7 +798,9 @@ export default function ResultsPage() {
                           <Loader2 className="h-5 w-5 animate-spin text-foreground/30" />
                         </div>
                       ) : tree.length === 0 ? (
-                        <p className="py-6 text-center text-xs text-foreground/40">No structure available</p>
+                        <p className="py-6 text-center text-xs text-foreground/40">
+                          No structure available
+                        </p>
                       ) : (
                         tree.map((node, i) => (
                           <TreeNode key={node.name} node={node} index={i} />
@@ -712,7 +827,9 @@ export default function ResultsPage() {
                         AI framework architect
                       </h2>
                       <p className="mt-1 text-sm text-foreground/50">
-                        Generate stronger {frameworks.find((f) => f.id === selectedFw)?.label} implementation guidance from this extracted job.
+                        Generate stronger{" "}
+                        {frameworks.find((f) => f.id === selectedFw)?.label}{" "}
+                        implementation guidance from this extracted job.
                       </p>
                     </div>
 
@@ -724,9 +841,14 @@ export default function ResultsPage() {
                       className="flex items-center justify-center gap-2 rounded-full bg-secondary px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
                     >
                       {aiBuilding ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Building plan...</>
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Building
+                          plan...
+                        </>
                       ) : (
-                        <><Sparkles className="h-4 w-4" /> AI build plan</>
+                        <>
+                          <Sparkles className="h-4 w-4" /> AI build plan
+                        </>
                       )}
                     </motion.button>
                   </div>
@@ -787,16 +909,24 @@ export default function ResultsPage() {
                           className="flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-[#111] transition-opacity hover:opacity-90 disabled:opacity-50"
                         >
                           {aiFilesLoading ? (
-                            <><Loader2 className="h-4 w-4 animate-spin" /> Building zip...</>
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                              Building zip...
+                            </>
                           ) : (
-                            <><Download className="h-4 w-4" /> Download AI starter pack</>
+                            <>
+                              <Download className="h-4 w-4" /> Download AI
+                              starter pack
+                            </>
                           )}
                         </motion.button>
                       </div>
                     </div>
                   ) : (
                     <div className="px-5 py-5 text-sm text-foreground/45">
-                      Use AI after extraction to get component boundaries, architecture direction, and cleaner implementation ideas before export.
+                      Use AI after extraction to get component boundaries,
+                      architecture direction, and cleaner implementation ideas
+                      before export.
                     </div>
                   )}
                 </div>
@@ -820,10 +950,15 @@ export default function ResultsPage() {
                     >
                       <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <p className="text-sm font-medium text-foreground">Code Health Report</p>
+                          <p className="text-sm font-medium text-foreground">
+                            Code Health Report
+                          </p>
                           <ValStatusBadge result={validation} />
                         </div>
-                        <button onClick={() => setShowValidation(false)} className="rounded-lg p-1 text-foreground/30 transition-colors hover:bg-muted hover:text-foreground">
+                        <button
+                          onClick={() => setShowValidation(false)}
+                          className="rounded-lg p-1 text-foreground/30 transition-colors hover:bg-muted hover:text-foreground"
+                        >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
@@ -834,7 +969,9 @@ export default function ResultsPage() {
                           <div className="flex items-center gap-2">
                             <Wrench className="h-4 w-4 text-amber-400" />
                             <p className="text-xs font-medium text-amber-300">
-                              {fixableChecks.length} issue{fixableChecks.length > 1 ? "s" : ""} can be auto-fixed
+                              {fixableChecks.length} issue
+                              {fixableChecks.length > 1 ? "s" : ""} can be
+                              auto-fixed
                             </p>
                           </div>
                           <motion.button
@@ -845,9 +982,14 @@ export default function ResultsPage() {
                             className="flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-amber-400 disabled:opacity-50"
                           >
                             {fixing ? (
-                              <><Loader2 className="h-3 w-3 animate-spin" /> Fixing&hellip;</>
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                                Fixing&hellip;
+                              </>
                             ) : (
-                              <><Sparkles className="h-3 w-3" /> Fix All Issues</>
+                              <>
+                                <Sparkles className="h-3 w-3" /> Fix All Issues
+                              </>
                             )}
                           </motion.button>
                         </div>
@@ -887,10 +1029,16 @@ export default function ResultsPage() {
                             transition={{ delay: i * 0.025 }}
                             className="flex items-start gap-3 px-5 py-3"
                           >
-                            <div className="mt-0.5"><ValCheckIcon status={check.status} /></div>
+                            <div className="mt-0.5">
+                              <ValCheckIcon status={check.status} />
+                            </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-foreground">{check.label}</p>
-                              <p className="mt-0.5 text-xs leading-relaxed text-foreground/50">{check.detail}</p>
+                              <p className="text-sm font-medium text-foreground">
+                                {check.label}
+                              </p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-foreground/50">
+                                {check.detail}
+                              </p>
                             </div>
                             {check.fixable && check.status !== "pass" && (
                               <motion.button
@@ -927,11 +1075,18 @@ export default function ResultsPage() {
                     }`}
                   >
                     {validating ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Validating&hellip;</>
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                        Validating&hellip;
+                      </>
                     ) : validation && showValidation ? (
-                      <><RefreshCw className="h-4 w-4" /> Re-validate</>
+                      <>
+                        <RefreshCw className="h-4 w-4" /> Re-validate
+                      </>
                     ) : (
-                      <><ShieldCheck className="h-4 w-4" /> Validate</>
+                      <>
+                        <ShieldCheck className="h-4 w-4" /> Validate
+                      </>
                     )}
                   </motion.button>
 
@@ -947,9 +1102,16 @@ export default function ResultsPage() {
                       className="flex items-center justify-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-6 py-3.5 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
                     >
                       {fixing ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Fixing&hellip;</>
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                          Fixing&hellip;
+                        </>
                       ) : (
-                        <><Sparkles className="h-4 w-4" /> Fix {fixableChecks.length} Issue{fixableChecks.length > 1 ? "s" : ""}</>
+                        <>
+                          <Sparkles className="h-4 w-4" /> Fix{" "}
+                          {fixableChecks.length} Issue
+                          {fixableChecks.length > 1 ? "s" : ""}
+                        </>
                       )}
                     </motion.button>
                   )}
@@ -964,9 +1126,12 @@ export default function ResultsPage() {
                     className="relative flex flex-1 items-center justify-center gap-2 rounded-full bg-foreground py-3.5 text-sm font-medium text-[#111] transition-opacity hover:opacity-90"
                   >
                     <Download className="h-4 w-4" />
-                    Download {frameworks.find((f) => f.id === selectedFw)?.label} (.zip)
+                    Download{" "}
+                    {frameworks.find((f) => f.id === selectedFw)?.label} (.zip)
                     {!validation && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">!</span>
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
+                        !
+                      </span>
                     )}
                   </motion.button>
 

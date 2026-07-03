@@ -19,9 +19,9 @@ export function playwrightScrapeEnabled(): boolean {
 }
 
 export type PageFetchResult = {
-  /** Raw SSR document — what the Framer runtime hydrates against. */
+  /** Raw SSR document - what the Framer runtime hydrates against. */
   html: string | null;
-  /** Post-JS DOM in initial scroll state — icons/lazy content materialized. */
+  /** Post-JS DOM in initial scroll state - icons/lazy content materialized. */
   renderedHtml: string | null;
   /** Assets observed during navigation with their types. */
   networkAssets: { url: string; type: string }[];
@@ -34,8 +34,14 @@ export type PlaywrightPageFetcher = {
 
 // Resource types to capture during Playwright page load.
 // "document" = page navigations (skip). "xhr"/"fetch" = API calls (skip).
-// We want stylesheet, script, image, font, media — from ANY domain (Framer CDN is cross-origin).
-const CAPTURE_RESOURCE_TYPES = new Set(["stylesheet", "script", "image", "font", "media"]);
+// We want stylesheet, script, image, font, media - from ANY domain (Framer CDN is cross-origin).
+const CAPTURE_RESOURCE_TYPES = new Set([
+  "stylesheet",
+  "script",
+  "image",
+  "font",
+  "media",
+]);
 
 export async function createPlaywrightPageFetcher(): Promise<PlaywrightPageFetcher | null> {
   if (!playwrightScrapeEnabled()) return null;
@@ -44,7 +50,11 @@ export async function createPlaywrightPageFetcher(): Promise<PlaywrightPageFetch
   try {
     browser = await chromium.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
     });
   } catch {
     return null;
@@ -59,14 +69,17 @@ export async function createPlaywrightPageFetcher(): Promise<PlaywrightPageFetch
     });
     const page = await context.newPage();
 
-    const onFinished = (request: { url: () => string; resourceType: () => string }) => {
+    const onFinished = (request: {
+      url: () => string;
+      resourceType: () => string;
+    }) => {
       if (networkAssets.length >= MAX_CAPTURED_ASSET_URLS) return;
       try {
         const u = request.url().split("#")[0];
         if (!u || u.startsWith("data:") || u.startsWith("blob:")) return;
         const rt = request.resourceType();
         if (!CAPTURE_RESOURCE_TYPES.has(rt)) return;
-        if (networkAssets.some(a => a.url === u)) return;
+        if (networkAssets.some((a) => a.url === u)) return;
         networkAssets.push({ url: u, type: rt });
       } catch {
         /* ignore */
@@ -76,15 +89,20 @@ export async function createPlaywrightPageFetcher(): Promise<PlaywrightPageFetch
     page.on("requestfinished", onFinished);
 
     try {
-      const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
+      const response = await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: NAV_TIMEOUT_MS,
+      });
 
-      // Raw SSR document — the Framer runtime hydrates against exactly this
+      // Raw SSR document - the Framer runtime hydrates against exactly this
       // markup, so saving it (not the post-hydration DOM) avoids React #418.
       let rawHtml: string | null = null;
       try {
         const t = await response?.text();
         if (t && t.includes("<body")) rawHtml = t;
-      } catch { /* fall back to rendered content */ }
+      } catch {
+        /* fall back to rendered content */
+      }
 
       // Auto-scroll to trigger lazy loading
       await page.evaluate(async () => {
@@ -103,15 +121,18 @@ export async function createPlaywrightPageFetcher(): Promise<PlaywrightPageFetch
         });
       });
 
-      await page.waitForLoadState("networkidle", { timeout: NETWORK_IDLE_MS }).catch(() => {});
+      await page
+        .waitForLoadState("networkidle", { timeout: NETWORK_IDLE_MS })
+        .catch(() => {});
       // Wait a bit more for any final Framer hydration
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 2000));
 
       // Rendered DOM in initial scroll state (for static JSX exports)
       await page.evaluate(() => window.scrollTo(0, 0));
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 1000));
       const rendered = await page.content();
-      const renderedHtml = rendered && rendered.includes("<body") ? rendered : null;
+      const renderedHtml =
+        rendered && rendered.includes("<body") ? rendered : null;
 
       const html = rawHtml ?? renderedHtml;
       return { html, renderedHtml, networkAssets };

@@ -806,10 +806,60 @@ export default function Home() {
   return (
     <>
       <Head>
+        <title>SiteForge - Clone Framer Sites to HTML, React & Next.js</title>
+
         <meta
           name="description"
-          content="Paste a Framer URL and download the whole site as vanilla HTML, React, or Next.js, with every animation still alive."
+          content="Paste a Framer URL and export the full site as clean HTML, React, or Next.js. Keep animations, assets, pages, and styles in a downloadable ZIP."
         />
+
+        <meta
+          name="keywords"
+          content="Framer site cloner, Framer export, clone Framer website, Framer to HTML, Framer to React, Framer to Next.js, SiteForge"
+        />
+
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="SiteForge" />
+        <meta name="theme-color" content="#0B0A09" />
+
+        <link rel="canonical" href="https://your-domain.com/" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SiteForge" />
+        <meta
+          property="og:title"
+          content="SiteForge - Clone Framer Sites to HTML, React & Next.js"
+        />
+        <meta
+          property="og:description"
+          content="Turn a published Framer site into clean HTML, React, or Next.js with animations, assets, and pages preserved."
+        />
+        {/* TODO */}
+        <meta property="og:url" content="" />
+        <meta property="og:image" content="" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta
+          property="og:image:alt"
+          content="SiteForge Framer site cloning tool preview"
+        />
+
+        {/* Twitter / X */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="SiteForge - Clone Framer Sites to HTML, React & Next.js"
+        />
+        <meta
+          name="twitter:description"
+          content="Paste a Framer URL and export the site as clean HTML, React, or Next.js."
+        />
+        <meta name="twitter:image" content="" />
+
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
 
       <style jsx global>{`

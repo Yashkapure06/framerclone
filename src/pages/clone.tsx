@@ -20,7 +20,7 @@ import {
   Smartphone,
 } from "lucide-react";
 
-// DS accent — used only as a signal color (spinner, selected checkbox/toggle)
+// DS accent - used only as a signal color (spinner, selected checkbox/toggle)
 const ACCENT = "#0099FF";
 
 type Viewport = "desktop" | "tablet" | "mobile";
@@ -645,7 +645,7 @@ export default function ClonePage() {
                           </label>
                         ))}
                         {(analysis?.pages || []).length === 0 && (
-                          <span className="text-xs text-white/40">—</span>
+                          <span className="text-xs text-white/40">-</span>
                         )}
                       </div>
                     )}
@@ -671,7 +671,7 @@ export default function ClonePage() {
                           />
                         ))}
                         {(analysis?.colors || []).length === 0 && (
-                          <span className="text-xs text-white/40">—</span>
+                          <span className="text-xs text-white/40">-</span>
                         )}
                       </div>
                     )}
@@ -688,7 +688,7 @@ export default function ClonePage() {
                           <Chip key={f}>{f}</Chip>
                         ))}
                         {(analysis?.fonts || []).length === 0 && (
-                          <span className="text-xs text-white/40">—</span>
+                          <span className="text-xs text-white/40">-</span>
                         )}
                       </div>
                     )}

@@ -29,7 +29,8 @@ async function safeFetch(url: string): Promise<string | null> {
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
     const r = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept: "text/html,text/css,application/xhtml+xml,*/*;q=0.8",
       },
       signal: controller.signal,
@@ -47,7 +48,10 @@ async function safeFetchBinary(url: string): Promise<Buffer | null> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
     const r = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -64,7 +68,11 @@ async function safeFetchBinary(url: string): Promise<Buffer | null> {
 
 function isSpaShell(html: string): boolean {
   const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1] || "";
-  const stripped = body.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, "").trim();
+  const stripped = body
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
   if (stripped.length < 100) return true;
   const divCount = (body.match(/<div/gi) || []).length;
   const scriptCount = (html.match(/<script/gi) || []).length;
@@ -73,14 +81,24 @@ function isSpaShell(html: string): boolean {
 }
 
 function extractViewportMeta(html: string): string {
-  const m = html.match(/<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["'][^>]*\/?>/i)
-    || html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']viewport["'][^>]*\/?>/i);
+  const m =
+    html.match(
+      /<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["'][^>]*\/?>/i,
+    ) ||
+    html.match(
+      /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']viewport["'][^>]*\/?>/i,
+    );
   return m?.[1]?.trim() || "width=device-width, initial-scale=1";
 }
 
 function extractFaviconUrl(html: string, pageUrl: string): string | null {
-  const m = html.match(/<link[^>]*rel=["'](?:icon|shortcut icon)["'][^>]*href=["']([^"']+)["'][^>]*\/?>/i)
-    || html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:icon|shortcut icon)["'][^>]*\/?>/i);
+  const m =
+    html.match(
+      /<link[^>]*rel=["'](?:icon|shortcut icon)["'][^>]*href=["']([^"']+)["'][^>]*\/?>/i,
+    ) ||
+    html.match(
+      /<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:icon|shortcut icon)["'][^>]*\/?>/i,
+    );
   if (m?.[1]) return resolveUrl(pageUrl, m[1]);
   return resolveUrl(pageUrl, "/favicon.ico");
 }
@@ -99,7 +117,12 @@ function extractInternalLinks(html: string, baseUrl: URL): string[] {
   for (const m of matches) {
     if (!m[1]) continue;
     const href = m[1].trim();
-    if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:")) continue;
+    if (
+      href.startsWith("mailto:") ||
+      href.startsWith("tel:") ||
+      href.startsWith("javascript:")
+    )
+      continue;
     const resolved = resolveUrl(baseUrl.toString(), href);
     if (!resolved) continue;
     try {
@@ -107,7 +130,9 @@ function extractInternalLinks(html: string, baseUrl: URL): string[] {
       if (u.hostname === baseUrl.hostname) {
         results.push(u.origin + u.pathname);
       }
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
   return unique(results);
 }
@@ -126,29 +151,69 @@ function urlToSlug(pageUrl: string, baseUrl: URL): string {
 
 function extractImages(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi))
+    if (m[1]) results.push(m[1]);
   for (const m of html.matchAll(/<img[^>]+srcset=["']([^"']+)["']/gi)) {
-    if (m[1]) for (const e of m[1].split(",")) { const u = e.trim().split(/\s+/)[0]; if (u) results.push(u); }
+    if (m[1])
+      for (const e of m[1].split(",")) {
+        const u = e.trim().split(/\s+/)[0];
+        if (u) results.push(u);
+      }
   }
-  for (const m of html.matchAll(/data-src=["']([^"']+\.(?:png|jpe?g|gif|webp|svg|avif|ico))["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /data-src=["']([^"']+\.(?:png|jpe?g|gif|webp|svg|avif|ico))["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
   for (const m of html.matchAll(/<source[^>]+srcset=["']([^"']+)["']/gi)) {
-    if (m[1]) for (const e of m[1].split(",")) { const u = e.trim().split(/\s+/)[0]; if (u) results.push(u); }
+    if (m[1])
+      for (const e of m[1].split(",")) {
+        const u = e.trim().split(/\s+/)[0];
+        if (u) results.push(u);
+      }
   }
-  for (const m of html.matchAll(/background(?:-image)?\s*:[^;]*url\(["']?([^"')]+\.(?:png|jpe?g|gif|webp|svg|avif))["']?\)/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<(?:video|audio|source)[^>]+src=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<video[^>]+poster=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["'][^>]*href=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /background(?:-image)?\s*:[^;]*url\(["']?([^"')]+\.(?:png|jpe?g|gif|webp|svg|avif))["']?\)/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<(?:video|audio|source)[^>]+src=["']([^"']+)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(/<video[^>]+poster=["']([^"']+)["']/gi))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["'][^>]*href=["']([^"']+)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
   return unique(results);
 }
 
 function extractStylesheetUrls(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/<link[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["']stylesheet["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/@import\s+(?:url\()?["']([^"']+\.css[^"']*)["']\)?/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*href=["']([^"']+\.css(?:\?[^"']*)?)["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']stylesheet["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /@import\s+(?:url\()?["']([^"']+\.css[^"']*)["']\)?/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*href=["']([^"']+\.css(?:\?[^"']*)?)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
   return unique(results);
 }
 
@@ -160,48 +225,83 @@ function extractInlineStyles(html: string): string[] {
   return results;
 }
 
-function resolveUrlsInCss(css: string, cssBaseUrl: string, assetMap?: Record<string, string>): string {
-  return css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (match, rawUrl: string) => {
-    const u = rawUrl.trim();
-    if (u.startsWith("data:")) return match;
-    
-    // If we have an asset map and this absolute URL is in it, use the local path.
-    if (assetMap && assetMap[u]) return `url("${assetMap[u]}")`;
-    const abs = resolveUrl(cssBaseUrl, u);
-    if (assetMap && abs && assetMap[abs]) return `url("${assetMap[abs]}")`;
+function resolveUrlsInCss(
+  css: string,
+  cssBaseUrl: string,
+  assetMap?: Record<string, string>,
+): string {
+  return css.replace(
+    /url\(\s*["']?([^"')]+)["']?\s*\)/gi,
+    (match, rawUrl: string) => {
+      const u = rawUrl.trim();
+      if (u.startsWith("data:")) return match;
 
-    if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("//")) return match;
-    return abs ? `url("${abs}")` : match;
-  });
+      // If we have an asset map and this absolute URL is in it, use the local path.
+      if (assetMap && assetMap[u]) return `url("${assetMap[u]}")`;
+      const abs = resolveUrl(cssBaseUrl, u);
+      if (assetMap && abs && assetMap[abs]) return `url("${assetMap[abs]}")`;
+
+      if (
+        u.startsWith("http://") ||
+        u.startsWith("https://") ||
+        u.startsWith("//")
+      )
+        return match;
+      return abs ? `url("${abs}")` : match;
+    },
+  );
 }
 
-function resolveUrlsInHtml(html: string, pageUrl: string, assetMap?: Record<string, string>): string {
+function resolveUrlsInHtml(
+  html: string,
+  pageUrl: string,
+  assetMap?: Record<string, string>,
+): string {
   const rewrite = (val: string): string => {
-    if (!val || val.startsWith("data:") || val.startsWith("#") || val.startsWith("mailto:") || val.startsWith("tel:") || val.startsWith("javascript:")) return val;
-    
+    if (
+      !val ||
+      val.startsWith("data:") ||
+      val.startsWith("#") ||
+      val.startsWith("mailto:") ||
+      val.startsWith("tel:") ||
+      val.startsWith("javascript:")
+    )
+      return val;
+
     // Check asset map first
     if (assetMap && assetMap[val]) return assetMap[val];
     const abs = resolveUrl(pageUrl, val);
     if (assetMap && abs && assetMap[abs]) return assetMap[abs];
 
-    if (val.startsWith("http://") || val.startsWith("https://") || val.startsWith("//")) return val;
+    if (
+      val.startsWith("http://") ||
+      val.startsWith("https://") ||
+      val.startsWith("//")
+    )
+      return val;
     return abs || val;
   };
 
   return html
-    .replace(/(src|href|poster|data-src|srcset|action)=(["'])([^"']*)\2/gi, (match, attr: string, q: string, val: string) => {
-      if (attr.toLowerCase() === "srcset") {
-        const resolved = val.split(",").map((entry) => {
-          const parts = entry.trim().split(/\s+/);
-          const u = parts[0];
-          if (!u) return entry;
-          const local = rewrite(u);
-          return [local, ...parts.slice(1)].join(" ");
-        }).join(", ");
-        return `${attr}=${q}${resolved}${q}`;
-      }
-      return `${attr}=${q}${rewrite(val)}${q}`;
-    })
+    .replace(
+      /(src|href|poster|data-src|srcset|action)=(["'])([^"']*)\2/gi,
+      (match, attr: string, q: string, val: string) => {
+        if (attr.toLowerCase() === "srcset") {
+          const resolved = val
+            .split(",")
+            .map((entry) => {
+              const parts = entry.trim().split(/\s+/);
+              const u = parts[0];
+              if (!u) return entry;
+              const local = rewrite(u);
+              return [local, ...parts.slice(1)].join(" ");
+            })
+            .join(", ");
+          return `${attr}=${q}${resolved}${q}`;
+        }
+        return `${attr}=${q}${rewrite(val)}${q}`;
+      },
+    )
     .replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (match, rawUrl: string) => {
       const u = rawUrl.trim();
       // Fragment refs (SVG clip-path) and data URIs never need rewriting
@@ -220,17 +320,22 @@ function extractHeadContent(html: string): string {
 
 function extractScriptUrls(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi))
+    if (m[1]) results.push(m[1]);
   return unique(results);
 }
 
 /** ES module graphs (Vite, Next, Framer) often expose chunks only via link modulepreload. */
 function extractModulePreloadHrefs(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/<link[^>]+rel=["']modulepreload["'][^>]*href=["']([^"']+)["']/gi)) {
+  for (const m of html.matchAll(
+    /<link[^>]+rel=["']modulepreload["'][^>]*href=["']([^"']+)["']/gi,
+  )) {
     if (m[1]) results.push(m[1]);
   }
-  for (const m of html.matchAll(/<link[^>]+href=["']([^"']+)["'][^>]*rel=["']modulepreload["']/gi)) {
+  for (const m of html.matchAll(
+    /<link[^>]+href=["']([^"']+)["'][^>]*rel=["']modulepreload["']/gi,
+  )) {
     if (m[1]) results.push(m[1]);
   }
   return unique(results);
@@ -260,10 +365,22 @@ function extractInlineScriptCount(html: string): number {
 
 function extractFonts(html: string): string[] {
   const results: string[] = [];
-  for (const m of html.matchAll(/url\(["']?([^"')]+\.(?:woff2?|ttf|otf|eot)(?:\?[^"')]*)?)["']?\)/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*href=["']([^"']+\.(?:woff2?|ttf|otf|eot)(?:\?[^"']*)?)["'][^>]*as=["']font["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*as=["']font["'][^>]*href=["']([^"']+\.(?:woff2?|ttf|otf|eot)(?:\?[^"']*)?)["']/gi)) if (m[1]) results.push(m[1]);
-  for (const m of html.matchAll(/<link[^>]*href=["'](https:\/\/fonts\.googleapis\.com\/[^"']+)["']/gi)) if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /url\(["']?([^"')]+\.(?:woff2?|ttf|otf|eot)(?:\?[^"')]*)?)["']?\)/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*href=["']([^"']+\.(?:woff2?|ttf|otf|eot)(?:\?[^"']*)?)["'][^>]*as=["']font["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*as=["']font["'][^>]*href=["']([^"']+\.(?:woff2?|ttf|otf|eot)(?:\?[^"']*)?)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
+  for (const m of html.matchAll(
+    /<link[^>]*href=["'](https:\/\/fonts\.googleapis\.com\/[^"']+)["']/gi,
+  ))
+    if (m[1]) results.push(m[1]);
   return unique(results);
 }
 
@@ -277,11 +394,16 @@ function extractBodyContent(html: string): string {
   return m?.[1]?.trim() || html;
 }
 
-function extractNavItems(html: string, baseUrl: URL): { label: string; href: string }[] {
+function extractNavItems(
+  html: string,
+  baseUrl: URL,
+): { label: string; href: string }[] {
   const navBlock = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i);
   if (!navBlock) return [];
   const items: { label: string; href: string }[] = [];
-  const links = navBlock[1].matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi);
+  const links = navBlock[1].matchAll(
+    /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+  );
   for (const m of links) {
     const href = m[1]?.trim();
     const rawLabel = m[2]?.replace(/<[^>]+>/g, "").trim();
@@ -295,14 +417,20 @@ function extractHeadings(html: string): { level: number; text: string }[] {
   const results: { level: number; text: string }[] = [];
   for (const m of html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi)) {
     const text = m[2]?.replace(/<[^>]+>/g, "").trim();
-    if (text && text.length < 200) results.push({ level: parseInt(m[1]), text });
+    if (text && text.length < 200)
+      results.push({ level: parseInt(m[1]), text });
   }
   return results;
 }
 
 function extractMetaDescription(html: string): string {
-  const m = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)
-    || html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+  const m =
+    html.match(
+      /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i,
+    ) ||
+    html.match(
+      /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i,
+    );
   return m?.[1]?.trim() || "";
 }
 
@@ -324,7 +452,7 @@ export type ExtractProgressEvent = Record<string, unknown>;
 export async function runScrapeJob(
   options: { url: string; removeWatermarks?: boolean },
   onProgress?: (event: any) => void,
-  jobDirOverride?: string
+  jobDirOverride?: string,
 ) {
   const { url, removeWatermarks } = options;
   const emit = (e: any) => onProgress?.(e);
@@ -353,7 +481,8 @@ export async function runScrapeJob(
     if (pwFetcher) {
       const result = await pwFetcher.fetchPage(pageUrl);
       for (const a of result.networkAssets) networkAssets.push(a);
-      if (result.html) return { html: result.html, renderedHtml: result.renderedHtml };
+      if (result.html)
+        return { html: result.html, renderedHtml: result.renderedHtml };
     }
     const html = await safeFetch(pageUrl);
     return { html, renderedHtml: null };
@@ -382,7 +511,11 @@ export async function runScrapeJob(
     const pagesRenderedDir = path.join(jobDir, "pages-rendered");
     ensureDir(pagesRenderedDir);
 
-    async function processPage(pageUrl: string, rawHtml: string, renderedHtml?: string | null) {
+    async function processPage(
+      pageUrl: string,
+      rawHtml: string,
+      renderedHtml?: string | null,
+    ) {
       let html = rawHtml;
       if (removeWatermarks && platformInfo.watermarks.length > 0) {
         html = stripWatermarks(html).html;
@@ -396,7 +529,10 @@ export async function runScrapeJob(
       const headings = extractHeadings(html);
       const images = extractImages(html);
       const stylesheetUrls = extractStylesheetUrls(html);
-      const scriptUrls = unique([...extractScriptUrls(html), ...extractModulePreloadHrefs(html)]);
+      const scriptUrls = unique([
+        ...extractScriptUrls(html),
+        ...extractModulePreloadHrefs(html),
+      ]);
       const fonts = extractFonts(html);
       const inlineScripts = extractInlineScriptCount(html);
       const inlineStyles = extractInlineStyles(html);
@@ -408,14 +544,17 @@ export async function runScrapeJob(
       totalInlineScripts += inlineScripts;
 
       for (const cssBlock of inlineStyles) {
-        allCssContent.push(`/* inline style from ${slug} */\n${resolveUrlsInCss(cssBlock, pageUrl)}`);
+        allCssContent.push(
+          `/* inline style from ${slug} */\n${resolveUrlsInCss(cssBlock, pageUrl)}`,
+        );
       }
 
       const resolvedHtml = resolveUrlsInHtml(html, pageUrl);
       const resolvedBody = extractBodyContent(resolvedHtml);
       const headContent = extractHeadContent(resolvedHtml);
 
-      const safeName = slug === "/" ? "index" : slug.replace(/^\//, "").replace(/\//g, "--");
+      const safeName =
+        slug === "/" ? "index" : slug.replace(/^\//, "").replace(/\//g, "--");
       fs.writeFileSync(path.join(pagesDir, `${safeName}.html`), resolvedHtml);
 
       // Rendered variant for static JSX exports: icons and lazy content are
@@ -431,7 +570,18 @@ export async function runScrapeJob(
         );
       }
 
-      pages.push({ url: pageUrl, slug, title, description, html: resolvedHtml, bodyContent: resolvedBody, navItems, headings, images, inlineStyles });
+      pages.push({
+        url: pageUrl,
+        slug,
+        title,
+        description,
+        html: resolvedHtml,
+        bodyContent: resolvedBody,
+        navItems,
+        headings,
+        images,
+        inlineStyles,
+      });
       emit({ type: "page", jobId: id, slug, title, url: pageUrl });
 
       if (pages.length === 1) {
@@ -442,7 +592,9 @@ export async function runScrapeJob(
     await processPage(parsedUrl.toString(), homeHtml, homeFetch.renderedHtml);
 
     const internalLinks = extractInternalLinks(homeHtml, parsedUrl);
-    const toVisit = internalLinks.filter((l) => !crawled.has(l)).slice(0, MAX_PAGES - 1);
+    const toVisit = internalLinks
+      .filter((l) => !crawled.has(l))
+      .slice(0, MAX_PAGES - 1);
 
     const crawlBatch = async (urls: string[]) => {
       const promises = urls.map(async (u) => {
@@ -501,7 +653,8 @@ export async function runScrapeJob(
       const urlToRelative: Record<string, string> = {};
       const usedNames = new Set<string>();
       const chunks = [];
-      for (let i = 0; i < urls.length; i += 6) chunks.push(urls.slice(i, i + 6));
+      for (let i = 0; i < urls.length; i += 6)
+        chunks.push(urls.slice(i, i + 6));
       let seq = 0;
       for (const chunk of chunks) {
         await Promise.allSettled(
@@ -509,11 +662,18 @@ export async function runScrapeJob(
             const buf = await safeFetchBinary(u);
             if (!buf) return;
             const parsed = new URL(u);
-            let name = path.basename(parsed.pathname).replace(/[^a-zA-Z0-9._-]/g, "_");
-            if (!name || name === "_") name = `asset-${seq++}-${Math.random().toString(36).slice(2, 6)}`;
-            // Known extension required — versioned module names like
+            let name = path
+              .basename(parsed.pathname)
+              .replace(/[^a-zA-Z0-9._-]/g, "_");
+            if (!name || name === "_")
+              name = `asset-${seq++}-${Math.random().toString(36).slice(2, 6)}`;
+            // Known extension required - versioned module names like
             // "check.js@0.0.29" must become .js files or esbuild has no loader.
-            if (!/\.(m?js|css|json|png|jpe?g|gif|webp|svg|avif|ico|woff2?|ttf|otf|eot|mp4|webm|mp3|wasm|txt|xml|html)$/i.test(name)) {
+            if (
+              !/\.(m?js|css|json|png|jpe?g|gif|webp|svg|avif|ico|woff2?|ttf|otf|eot|mp4|webm|mp3|wasm|txt|xml|html)$/i.test(
+                name,
+              )
+            ) {
               name += defaultExt;
             }
             let destName = name;
@@ -542,31 +702,47 @@ export async function runScrapeJob(
     );
 
     const resolvedScriptCandidates = unique(
-      uniqueScripts.map((s) => resolveUrl(parsedUrl.toString(), s)).filter((u): u is string => u !== null)
+      uniqueScripts
+        .map((s) => resolveUrl(parsedUrl.toString(), s))
+        .filter((u): u is string => u !== null),
     );
-    const scriptHostOrdered = sortUrlsSameHostFirst(resolvedScriptCandidates, parsedUrl.hostname).slice(
-      0,
-      MAX_SCRIPT_DOWNLOADS,
-    );
+    const scriptHostOrdered = sortUrlsSameHostFirst(
+      resolvedScriptCandidates,
+      parsedUrl.hostname,
+    ).slice(0, MAX_SCRIPT_DOWNLOADS);
 
     const scriptsDir = path.join(jobDir, "scripts");
     ensureDir(scriptsDir);
-    const scriptAssetMap = await downloadBinaryBatch(scriptHostOrdered, scriptsDir, "./scripts/", ".js");
+    const scriptAssetMap = await downloadBinaryBatch(
+      scriptHostOrdered,
+      scriptsDir,
+      "./scripts/",
+      ".js",
+    );
 
     const fontsDir = path.join(jobDir, "fonts");
     ensureDir(fontsDir);
     const downloadableFonts = uniqueFonts
       .map((f) => resolveUrl(parsedUrl.toString(), f))
       .filter((u): u is string => u !== null);
-    const fontAssetMap = await downloadBinaryBatch(downloadableFonts, fontsDir, "./fonts/", ".woff2");
+    const fontAssetMap = await downloadBinaryBatch(
+      downloadableFonts,
+      fontsDir,
+      "./fonts/",
+      ".woff2",
+    );
 
     // Map pages to local paths
     const pageAssetMap: Record<string, string> = {};
     for (const p of pages) {
-      const safeName = p.slug === "/" ? "index" : p.slug.replace(/^\//, "").replace(/\//g, "--");
-      const localPath = p.slug === "/" ? "./index.html" : `./pages/${safeName}.html`;
+      const safeName =
+        p.slug === "/"
+          ? "index"
+          : p.slug.replace(/^\//, "").replace(/\//g, "--");
+      const localPath =
+        p.slug === "/" ? "./index.html" : `./pages/${safeName}.html`;
       pageAssetMap[p.url] = localPath;
-      
+
       // Also map the path without trailing slash if it exists
       if (p.url.endsWith("/")) {
         pageAssetMap[p.url.slice(0, -1)] = localPath;
@@ -575,8 +751,16 @@ export async function runScrapeJob(
       }
     }
 
-    const fullAssetMap = { ...imageAssetMap, ...scriptAssetMap, ...fontAssetMap, ...pageAssetMap };
-    fs.writeFileSync(path.join(jobDir, "asset-map.json"), JSON.stringify(fullAssetMap, null, 2));
+    const fullAssetMap = {
+      ...imageAssetMap,
+      ...scriptAssetMap,
+      ...fontAssetMap,
+      ...pageAssetMap,
+    };
+    fs.writeFileSync(
+      path.join(jobDir, "asset-map.json"),
+      JSON.stringify(fullAssetMap, null, 2),
+    );
 
     // Process CSS now that we have all assets mapped
     const uniqueStylesheetUrls = unique(allStylesheetUrls);
@@ -595,13 +779,16 @@ export async function runScrapeJob(
         allCssContent.push(`/* ${cssUrl} */\n${resolvedCss}`);
       }
     }
-    fs.writeFileSync(path.join(jobDir, "css-map.json"), JSON.stringify(cssFileMap, null, 2));
+    fs.writeFileSync(
+      path.join(jobDir, "css-map.json"),
+      JSON.stringify(cssFileMap, null, 2),
+    );
 
     if (platformInfo.name === "Framer") {
-      // Editor-bar iframe is Framer tooling — never functional in a clone.
+      // Editor-bar iframe is Framer tooling - never functional in a clone.
       allCssContent.push(
         `/* website-extractor: hide Framer editor-bar iframe */\n` +
-        `#__framer-editorbar { display: none !important; }`,
+          `#__framer-editorbar { display: none !important; }`,
       );
     }
     if (removeWatermarks && platformInfo.name === "Framer") {
@@ -609,17 +796,23 @@ export async function runScrapeJob(
       // can't catch that, so hide it via CSS in every export.
       allCssContent.push(
         `/* website-extractor: hide runtime-injected Framer badge */\n` +
-        `#__framer-badge-container, .__framer-badge, [data-framer-badge], a[href*="framer.com"][class*="badge"] { display: none !important; }`,
+          `#__framer-badge-container, .__framer-badge, [data-framer-badge], a[href*="framer.com"][class*="badge"] { display: none !important; }`,
       );
     }
 
     if (allCssContent.length > 0) {
-      fs.writeFileSync(path.join(jobDir, "combined.css"), allCssContent.join("\n\n"));
+      fs.writeFileSync(
+        path.join(jobDir, "combined.css"),
+        allCssContent.join("\n\n"),
+      );
     }
 
     // First write index.html so it can be deep-rewritten
     const spaDetected = isSpaShell(homeHtml);
-    fs.writeFileSync(path.join(jobDir, "index.html"), resolveUrlsInHtml(homeHtml, parsedUrl.toString(), fullAssetMap));
+    fs.writeFileSync(
+      path.join(jobDir, "index.html"),
+      resolveUrlsInHtml(homeHtml, parsedUrl.toString(), fullAssetMap),
+    );
 
     // Deep rewrite all files to point to local assets
     const deepRewrite = (dir: string) => {
@@ -630,54 +823,81 @@ export async function runScrapeJob(
           deepRewrite(full);
           continue;
         }
-        if (f.endsWith(".html") || f.endsWith(".css") || f.endsWith(".js") || f.endsWith(".json")) {
+        if (
+          f.endsWith(".html") ||
+          f.endsWith(".css") ||
+          f.endsWith(".js") ||
+          f.endsWith(".json")
+        ) {
           let content = fs.readFileSync(full, "utf8");
           let changed = false;
           // Sort keys by length descending to avoid partial matches
-          const sortedKeys = Object.keys(fullAssetMap).sort((a, b) => b.length - a.length);
-          
+          const sortedKeys = Object.keys(fullAssetMap).sort(
+            (a, b) => b.length - a.length,
+          );
+
           // Calculate relative path to root based on file depth
-          const relToRoot = path.relative(path.dirname(full), jobDir).replace(/\\/g, "/") || ".";
+          const relToRoot =
+            path.relative(path.dirname(full), jobDir).replace(/\\/g, "/") ||
+            ".";
           const prefix = relToRoot === "." ? "./" : relToRoot + "/";
 
           for (const key of sortedKeys) {
             const localPath = fullAssetMap[key].replace(/^\.\//, prefix);
             const escapedLocalPath = localPath.replace(/\//g, "\\/");
-            
+
             if (content.includes(key)) {
               const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
               const regex = new RegExp(escapedKey, "g");
               content = content.replace(regex, localPath);
               changed = true;
             }
-            
+
             const slashedKey = key.replace(/\//g, "\\/");
             if (content.includes(slashedKey)) {
-              const escapedSlashedKey = slashedKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const escapedSlashedKey = slashedKey.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&",
+              );
               const regex = new RegExp(escapedSlashedKey, "g");
               content = content.replace(regex, escapedLocalPath);
               changed = true;
             }
           }
-          
+
           if (changed) {
             fs.writeFileSync(full, content);
           }
         }
       }
     };
-    
-    // Create Portable Bundle for file:// support
-    await recursivelyDownloadMissingChunks(jobDir, fullAssetMap, parsedUrl.toString(), emit);
-    await createPortableBundle(jobDir, fullAssetMap, emit, removeWatermarks === true);
 
-    emit({ type: "progress", jobId: id, message: "Rewriting all asset references (including JS bundle) for offline use..." });
+    // Create Portable Bundle for file:// support
+    await recursivelyDownloadMissingChunks(
+      jobDir,
+      fullAssetMap,
+      parsedUrl.toString(),
+      emit,
+    );
+    await createPortableBundle(
+      jobDir,
+      fullAssetMap,
+      emit,
+      removeWatermarks === true,
+    );
+
+    emit({
+      type: "progress",
+      jobId: id,
+      message:
+        "Rewriting all asset references (including JS bundle) for offline use...",
+    });
     deepRewrite(jobDir);
 
     // deepRewrite localizes absolute URLs inside JS to relative paths, but
     // single-argument `new URL("../images/x.jpg")` throws. Give them a base.
     // Also neutralize Framer tooling imports (editor bar, badge iframe) that
-    // were kept external — an empty data-URL module loads cleanly offline.
+    // were kept external - an empty data-URL module loads cleanly offline.
     if (fs.existsSync(scriptsDir)) {
       for (const f of fs.readdirSync(scriptsDir)) {
         if (!/\.(js|mjs)$/i.test(f)) continue;
@@ -702,41 +922,59 @@ export async function runScrapeJob(
     const inlineAssetsIntoHtml = (htmlContent: string): string => {
       let finalHtml = htmlContent;
 
-      // 0. Drop Framer's analytics/tracking script — it reads
+      // 0. Drop Framer's analytics/tracking script - it reads
       // document.currentScript.src (breaks when inlined) and phones home.
-      finalHtml = finalHtml.replace(/<script[^>]*\bdata-fid=[^>]*><\/script>/gi, "");
+      finalHtml = finalHtml.replace(
+        /<script[^>]*\bdata-fid=[^>]*><\/script>/gi,
+        "",
+      );
 
-      // Drop the editor-bar loader — Framer tooling that navigates to
+      // Drop the editor-bar loader - Framer tooling that navigates to
       // preview-module.html?framerSiteId=… and dead-ends a static clone.
-      finalHtml = finalHtml.replace(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/gi, (m, body: string) =>
-        body.includes("__framer_force_showing_editorbar_since") || body.includes("editorbar") ? "" : m,
+      finalHtml = finalHtml.replace(
+        /<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/gi,
+        (m, body: string) =>
+          body.includes("__framer_force_showing_editorbar_since") ||
+          body.includes("editorbar")
+            ? ""
+            : m,
       );
 
       // 1. STRIP original module preloads and script modules to avoid CORS errors/conflicts
-      finalHtml = finalHtml.replace(/<link[^>]+rel=["']modulepreload["'][^>]*>/gi, "");
-      finalHtml = finalHtml.replace(/<link[^>]+href=["'][^"']+["'][^>]*rel=["']modulepreload["'][^>]*>/gi, "");
-      // Remove all script modules EXCEPT the bundle — attribute order varies
+      finalHtml = finalHtml.replace(
+        /<link[^>]+rel=["']modulepreload["'][^>]*>/gi,
+        "",
+      );
+      finalHtml = finalHtml.replace(
+        /<link[^>]+href=["'][^"']+["'][^>]*rel=["']modulepreload["'][^>]*>/gi,
+        "",
+      );
+      // Remove all script modules EXCEPT the bundle - attribute order varies
       finalHtml = finalHtml.replace(/<script\b[^>]*><\/script>/gi, (tag) => {
         if (!/type=["']module["']/i.test(tag)) return tag;
         if (tag.includes("portable-bundle.js")) return tag;
         return "";
       });
-      
+
       // 2. Inline CSS
       if (allCssContent.length > 0) {
         const styleTag = `\n<style>\n${allCssContent.join("\n\n")}\n</style>\n`;
         finalHtml = finalHtml.replace("</head>", () => `${styleTag}</head>`);
         // Remove external CSS links
-        finalHtml = finalHtml.replace(/<link[^>]*rel=["']stylesheet["'][^>]*href=["'](?:\.\.\/)?css\/style-\d+\.css["'][^>]*>/gi, "");
+        finalHtml = finalHtml.replace(
+          /<link[^>]*rel=["']stylesheet["'][^>]*href=["'](?:\.\.\/)?css\/style-\d+\.css["'][^>]*>/gi,
+          "",
+        );
       }
-      
+
       // 3. Inline JS
       const bundlePath = path.join(jobDir, "scripts", "portable-bundle.js");
       if (fs.existsSync(bundlePath)) {
         const jsContent = fs.readFileSync(bundlePath, "utf8");
         const scriptTag = `\n<script>\n${jsContent}\n</script>\n`;
         // Replace the main bundle reference with inlined code
-        const bundleRegex = /<script[^>]+src=["'](?:\.\.\/|\.\/)?scripts\/portable-bundle\.js["'][^>]*><\/script>/i;
+        const bundleRegex =
+          /<script[^>]+src=["'](?:\.\.\/|\.\/)?scripts\/portable-bundle\.js["'][^>]*><\/script>/i;
         if (bundleRegex.test(finalHtml)) {
           finalHtml = finalHtml.replace(bundleRegex, () => scriptTag);
         } else {
@@ -751,7 +989,7 @@ export async function runScrapeJob(
       const navShim = `\n<script>\ndocument.addEventListener('click', function (e) {\n  var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;\n  if (!a) return;\n  var href = a.getAttribute('href');\n  if (!href || /^(https?:|mailto:|tel:|#)/i.test(href)) return;\n  if (/\\.html(#|$)/i.test(href)) {\n    e.preventDefault();\n    e.stopImmediatePropagation();\n    window.location.href = href;\n  }\n}, true);\n</script>\n`;
       finalHtml = finalHtml.replace(/<head([^>]*)>/i, (m) => `${m}${navShim}`);
 
-      // 5. Inline remaining local classic scripts — scripts/ isn't shipped in
+      // 5. Inline remaining local classic scripts - scripts/ isn't shipped in
       // the standalone bundle. Missing files: drop the tag instead of 404ing.
       finalHtml = finalHtml.replace(
         /<script([^>]*)src=["'](?:\.\.\/|\.\/)?scripts\/([^"']+)["']([^>]*)><\/script>/gi,
@@ -768,7 +1006,11 @@ export async function runScrapeJob(
       return finalHtml;
     };
 
-    emit({ type: "progress", jobId: id, message: "Writing self-contained standalone HTML files..." });
+    emit({
+      type: "progress",
+      jobId: id,
+      message: "Writing self-contained standalone HTML files...",
+    });
 
     // Standalone pages live flat next to index.html, so page-relative prefixes
     // (../images/) and the pages/ subdir vanish from every reference.
@@ -791,7 +1033,9 @@ export async function runScrapeJob(
     }
 
     if (fs.existsSync(pagesDir)) {
-      const pageFiles = fs.readdirSync(pagesDir).filter(f => f.endsWith(".html"));
+      const pageFiles = fs
+        .readdirSync(pagesDir)
+        .filter((f) => f.endsWith(".html"));
       for (const pf of pageFiles) {
         if (pf === "index.html") continue; // root index.html already written
         const content = fs.readFileSync(path.join(pagesDir, pf), "utf8");
@@ -822,7 +1066,9 @@ export async function runScrapeJob(
       description: extractMetaDescription(homeHtml),
       pages: pages.length,
       images: uniqueImages.length,
-      stylesheets: uniqueStylesheetUrls.length + pages.reduce((s, p) => s + p.inlineStyles.length, 0),
+      stylesheets:
+        uniqueStylesheetUrls.length +
+        pages.reduce((s, p) => s + p.inlineStyles.length, 0),
       scripts: uniqueScripts.length + totalInlineScripts,
       fonts: uniqueFonts.length,
       crawledPages: pages.map((p) => ({
@@ -858,7 +1104,10 @@ export async function runScrapeJob(
       createdAt: new Date().toISOString(),
     };
 
-    fs.writeFileSync(path.join(jobDir, "manifest.json"), JSON.stringify(manifest, null, 2));
+    fs.writeFileSync(
+      path.join(jobDir, "manifest.json"),
+      JSON.stringify(manifest, null, 2),
+    );
 
     const pagesData = pages.map((p) => ({
       slug: p.slug,
@@ -868,7 +1117,10 @@ export async function runScrapeJob(
       headings: p.headings,
       imageCount: p.images.length,
     }));
-    fs.writeFileSync(path.join(jobDir, "pages-data.json"), JSON.stringify(pagesData, null, 2));
+    fs.writeFileSync(
+      path.join(jobDir, "pages-data.json"),
+      JSON.stringify(pagesData, null, 2),
+    );
 
     emit({
       type: "done",
@@ -894,25 +1146,35 @@ async function createPortableBundle(
   emit: any,
   stripBadge = false,
 ) {
-  emit({ type: "progress", jobId: path.basename(jobDir), message: "Creating portable bundle for offline use..." });
-  
+  emit({
+    type: "progress",
+    jobId: path.basename(jobDir),
+    message: "Creating portable bundle for offline use...",
+  });
+
   const indexHtmlPath = path.join(jobDir, "index.html");
   if (!fs.existsSync(indexHtmlPath)) return;
-  
+
   let html = fs.readFileSync(indexHtmlPath, "utf8");
-  
+
   // Find the entry point script (Framer main bundle)
-  const scriptMatch = html.match(/<script\s+type=["']module["'][^>]*src=["'](\.\/scripts\/[^"']+)["'][^>]*>/i);
+  const scriptMatch = html.match(
+    /<script\s+type=["']module["'][^>]*src=["'](\.\/scripts\/[^"']+)["'][^>]*>/i,
+  );
   if (!scriptMatch) return;
-  
+
   const entryRelPath = scriptMatch[1];
   const entryFullPath = path.join(jobDir, entryRelPath.replace(/^\.\//, ""));
-  
+
   if (!fs.existsSync(entryFullPath)) {
-    emit({ type: "progress", jobId: path.basename(jobDir), message: "Entry point not found, skipping bundle." });
+    emit({
+      type: "progress",
+      jobId: path.basename(jobDir),
+      message: "Entry point not found, skipping bundle.",
+    });
     return;
   }
-  
+
   const bundleDestName = "portable-bundle.js";
   const scriptsDir = path.join(jobDir, "scripts");
   const bundleDestPath = path.join(scriptsDir, bundleDestName);
@@ -944,7 +1206,13 @@ async function createPortableBundle(
     // Separate process (arg array, no shell): immune to cmd.exe quoting and to
     // the esbuild service being torn down inside the Next.js dev runtime.
     const { spawnSync } = await import("child_process");
-    const esbuildBin = path.join(process.cwd(), "node_modules", "esbuild", "bin", "esbuild");
+    const esbuildBin = path.join(
+      process.cwd(),
+      "node_modules",
+      "esbuild",
+      "bin",
+      "esbuild",
+    );
     const result = spawnSync(
       process.execPath,
       [
@@ -975,23 +1243,33 @@ async function createPortableBundle(
       { stdio: ["ignore", "pipe", "pipe"], timeout: 120_000 },
     );
     if (result.status !== 0) {
-      throw new Error(`esbuild exited ${result.status}: ${result.stderr?.toString().slice(0, 500)}`);
+      throw new Error(
+        `esbuild exited ${result.status}: ${result.stderr?.toString().slice(0, 500)}`,
+      );
     }
 
     if (fs.existsSync(bundleDestPath)) {
       // Update HTML: replace the module script with our classic bundle
       const newScriptTag = `<script src="./scripts/${bundleDestName}"></script>`;
       html = html.replace(scriptMatch[0], newScriptTag);
-      
+
       // Also remove any modulepreload links to avoid redundant loads or errors on file://
       html = html.replace(/<link[^>]*rel=["']modulepreload["'][^>]*>/gi, "");
-      
+
       fs.writeFileSync(indexHtmlPath, html);
-      emit({ type: "progress", jobId: path.basename(jobDir), message: "Portable bundle created! Works offline via file://" });
+      emit({
+        type: "progress",
+        jobId: path.basename(jobDir),
+        message: "Portable bundle created! Works offline via file://",
+      });
     }
   } catch (err) {
     console.error("Bundling failed:", err);
-    emit({ type: "progress", jobId: path.basename(jobDir), message: "Bundling failed, using standard modules." });
+    emit({
+      type: "progress",
+      jobId: path.basename(jobDir),
+      message: "Bundling failed, using standard modules.",
+    });
   }
 }
 
@@ -999,39 +1277,47 @@ async function recursivelyDownloadMissingChunks(
   jobDir: string,
   assetMap: Record<string, string>,
   baseUrl: string,
-  emit: any
+  emit: any,
 ) {
-  emit({ type: "progress", jobId: path.basename(jobDir), message: "Searching for hidden script chunks..." });
-  
+  emit({
+    type: "progress",
+    jobId: path.basename(jobDir),
+    message: "Searching for hidden script chunks...",
+  });
+
   const scriptsDir = path.join(jobDir, "scripts");
   if (!fs.existsSync(scriptsDir)) return;
-  
+
   let foundNew = true;
   let iterations = 0;
   const MAX_ITERATIONS = 5; // Don't loop forever
-  
+
   while (foundNew && iterations < MAX_ITERATIONS) {
     foundNew = false;
     iterations++;
-    
-    const files = fs.readdirSync(scriptsDir).filter(f => f.endsWith(".mjs") || f.endsWith(".js"));
+
+    const files = fs
+      .readdirSync(scriptsDir)
+      .filter((f) => f.endsWith(".mjs") || f.endsWith(".js"));
     const currentAssetUrls = new Set(Object.keys(assetMap));
-    
+
     for (const file of files) {
       const fullPath = path.join(scriptsDir, file);
       const content = fs.readFileSync(fullPath, "utf8");
-      
+
       // Dynamic imports (quotes, backticks, escaped quotes), static `from`,
       // and bare side-effect imports.
       const matches = [
-        ...content.matchAll(/import\(\s*\\?["'`]([^"'`\\)]+\.mjs)\\?["'`]\s*\)/gi),
+        ...content.matchAll(
+          /import\(\s*\\?["'`]([^"'`\\)]+\.mjs)\\?["'`]\s*\)/gi,
+        ),
         ...content.matchAll(/from\s*\\?["'`]([^"'`\\]+\.mjs)\\?["'`]/gi),
         ...content.matchAll(/\bimport\s*\\?["'`]([^"'`\\]+\.mjs)\\?["'`]/gi),
       ];
       for (const m of matches) {
         const rawUrl = m[1].replace(/\\/g, ""); // Clean up escapes
         let absoluteUrl: string | null = null;
-        
+
         if (rawUrl.startsWith("http")) {
           absoluteUrl = rawUrl;
         } else if (rawUrl.startsWith("/")) {
@@ -1041,7 +1327,9 @@ async function recursivelyDownloadMissingChunks(
           } catch {}
         } else {
           // Relative to the current script - find original URL of this file
-          const originalUrl = Object.entries(assetMap).find(([u, local]) => local.endsWith(file))?.[0];
+          const originalUrl = Object.entries(assetMap).find(([u, local]) =>
+            local.endsWith(file),
+          )?.[0];
           if (originalUrl) {
             absoluteUrl = resolveUrl(originalUrl, rawUrl);
           } else {
@@ -1049,7 +1337,7 @@ async function recursivelyDownloadMissingChunks(
             absoluteUrl = resolveUrl(baseUrl, rawUrl);
           }
         }
-        
+
         if (absoluteUrl && !currentAssetUrls.has(absoluteUrl)) {
           const buf = await safeFetchBinary(absoluteUrl);
           if (buf) {
@@ -1059,7 +1347,11 @@ async function recursivelyDownloadMissingChunks(
             assetMap[absoluteUrl] = `./scripts/${name}`;
             currentAssetUrls.add(absoluteUrl);
             foundNew = true;
-            emit({ type: "progress", jobId: path.basename(jobDir), message: `Found hidden chunk: ${name}` });
+            emit({
+              type: "progress",
+              jobId: path.basename(jobDir),
+              message: `Found hidden chunk: ${name}`,
+            });
           }
         }
       }

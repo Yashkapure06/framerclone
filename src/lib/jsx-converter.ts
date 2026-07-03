@@ -70,27 +70,99 @@ const HTML_ATTR_MAP: Record<string, string> = {
 
 /** Attributes that are boolean in React (bare name = true). */
 const BOOLEAN_ATTRS = new Set([
-  "allowFullScreen", "async", "autoFocus", "autoPlay", "checked", "controls",
-  "default", "defer", "disabled", "formNoValidate", "hidden", "loop", "multiple",
-  "muted", "noValidate", "open", "playsInline", "readOnly", "required",
-  "reversed", "selected",
+  "allowFullScreen",
+  "async",
+  "autoFocus",
+  "autoPlay",
+  "checked",
+  "controls",
+  "default",
+  "defer",
+  "disabled",
+  "formNoValidate",
+  "hidden",
+  "loop",
+  "multiple",
+  "muted",
+  "noValidate",
+  "open",
+  "playsInline",
+  "readOnly",
+  "required",
+  "reversed",
+  "selected",
 ]);
 
 const VOID_ELEMENTS = new Set([
-  "area", "base", "br", "col", "embed", "hr", "img", "input",
-  "link", "meta", "param", "source", "track", "wbr",
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
 ]);
 
 const SVG_TAGS = new Set([
-  "svg", "path", "circle", "ellipse", "line", "polygon", "polyline", "rect",
-  "g", "defs", "symbol", "use", "text", "tspan", "textPath", "marker", "mask",
-  "pattern", "clipPath", "linearGradient", "radialGradient", "stop", "filter",
-  "feBlend", "feColorMatrix", "feComponentTransfer", "feComposite",
-  "feConvolveMatrix", "feDiffuseLighting", "feDisplacementMap", "feDropShadow",
-  "feFlood", "feGaussianBlur", "feImage", "feMerge", "feMergeNode",
-  "feMorphology", "feOffset", "feSpecularLighting", "feTile", "feTurbulence",
-  "foreignObject", "desc", "title", "switch", "view", "animate",
-  "animateMotion", "animateTransform", "mpath", "set", "metadata",
+  "svg",
+  "path",
+  "circle",
+  "ellipse",
+  "line",
+  "polygon",
+  "polyline",
+  "rect",
+  "g",
+  "defs",
+  "symbol",
+  "use",
+  "text",
+  "tspan",
+  "textPath",
+  "marker",
+  "mask",
+  "pattern",
+  "clipPath",
+  "linearGradient",
+  "radialGradient",
+  "stop",
+  "filter",
+  "feBlend",
+  "feColorMatrix",
+  "feComponentTransfer",
+  "feComposite",
+  "feConvolveMatrix",
+  "feDiffuseLighting",
+  "feDisplacementMap",
+  "feDropShadow",
+  "feFlood",
+  "feGaussianBlur",
+  "feImage",
+  "feMerge",
+  "feMergeNode",
+  "feMorphology",
+  "feOffset",
+  "feSpecularLighting",
+  "feTile",
+  "feTurbulence",
+  "foreignObject",
+  "desc",
+  "title",
+  "switch",
+  "view",
+  "animate",
+  "animateMotion",
+  "animateTransform",
+  "mpath",
+  "set",
+  "metadata",
 ]);
 
 function kebabToCamel(name: string): string {
@@ -137,11 +209,16 @@ function cssPropToJsKey(prop: string): string {
   let prefix = "";
   const m = p.match(/^-(webkit|moz|o|ms)-(.+)$/i);
   if (m) {
-    prefix = m[1].toLowerCase() === "ms" ? "ms" : m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
+    prefix =
+      m[1].toLowerCase() === "ms"
+        ? "ms"
+        : m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
     name = m[2];
   }
   const camel = kebabToCamel(name);
-  const key = prefix ? `${prefix}${camel[0].toUpperCase()}${camel.slice(1)}` : camel;
+  const key = prefix
+    ? `${prefix}${camel[0].toUpperCase()}${camel.slice(1)}`
+    : camel;
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
 }
 
@@ -160,7 +237,7 @@ export function styleStringToJsxObject(styleText: string): string {
 
 // ─── Text escaping ──────────────────────────────────────────────────
 
-/** JSX text nodes may not contain <, >, {, } — wrap runs containing them in {"…"}. */
+/** JSX text nodes may not contain <, >, {, } - wrap runs containing them in {"…"}. */
 function escapeJsxText(text: string): string {
   if (!/[<>{}]/.test(text)) return text;
   return `{${JSON.stringify(text)}}`;
@@ -223,7 +300,8 @@ function serializeNode(node: AnyNode, inSvg: boolean, depth: number): string {
   // Scripts never survive; styles are hoisted into the global stylesheet upstream
   if (tag === "script") return "";
   if (tag === "style") return "";
-  if (tag === "link" || tag === "meta" || tag === "base" || tag === "title") return "";
+  if (tag === "link" || tag === "meta" || tag === "base" || tag === "title")
+    return "";
 
   const svgNow = inSvg || tag === "svg";
   const attrs = serializeAttrs(el, svgNow);
@@ -292,25 +370,43 @@ function toPascal(name: string): string {
   return /^[0-9]/.test(cleaned) ? `Section${cleaned}` : cleaned;
 }
 
-function elementText($: cheerio.CheerioAPI, el: Element, selector: string): string {
+function elementText(
+  $: cheerio.CheerioAPI,
+  el: Element,
+  selector: string,
+): string {
   const found = $(el).find(selector).first();
   return found.length ? found.text().trim() : "";
 }
 
 /** Best human name for a section element. Framer stamps data-framer-name on blocks. */
-function sectionName($: cheerio.CheerioAPI, el: Element, index: number, used: Set<string>): { name: string; kind: JsxSection["kind"] } {
+function sectionName(
+  $: cheerio.CheerioAPI,
+  el: Element,
+  index: number,
+  used: Set<string>,
+): { name: string; kind: JsxSection["kind"] } {
   const tag = el.name.toLowerCase();
-  // Own name first, then direct children only — deep .find() would steal a
+  // Own name first, then direct children only - deep .find() would steal a
   // nested block's name (e.g. the navbar variant inside a page wrapper)
   const framerName =
     el.attribs?.["data-framer-name"] ||
-    el.children.filter(isElement).map((c) => c.attribs?.["data-framer-name"]).find(Boolean) ||
+    el.children
+      .filter(isElement)
+      .map((c) => c.attribs?.["data-framer-name"])
+      .find(Boolean) ||
     "";
   const idName = el.attribs?.id || "";
 
   let kind: JsxSection["kind"] = "section";
-  const nameHint = `${tag} ${framerName} ${idName} ${el.attribs?.class || ""}`.toLowerCase();
-  if (tag === "header" || tag === "nav" || /\b(nav|navbar|header|menu)\b/.test(nameHint)) kind = "header";
+  const nameHint =
+    `${tag} ${framerName} ${idName} ${el.attribs?.class || ""}`.toLowerCase();
+  if (
+    tag === "header" ||
+    tag === "nav" ||
+    /\b(nav|navbar|header|menu)\b/.test(nameHint)
+  )
+    kind = "header";
   else if (tag === "footer" || /\bfooter\b/.test(nameHint)) kind = "footer";
 
   let base = "";
@@ -349,7 +445,9 @@ const MIN_SECTION_HTML = 120;
 export function splitPageIntoSections(bodyHtml: string): PageSplit {
   const $ = cheerio.load(bodyHtml, null, false);
   const topNodes = $.root().contents().toArray();
-  const topElements = topNodes.filter(isElement).filter((el) => el.name !== "script" && el.name !== "style");
+  const topElements = topNodes
+    .filter(isElement)
+    .filter((el) => el.name !== "script" && el.name !== "style");
 
   // Main root = largest top-level element by serialized size
   let main: Element | null = null;
@@ -370,7 +468,9 @@ export function splitPageIntoSections(bodyHtml: string): PageSplit {
   // divs and a breakpoint container that holds nearly all the markup, so we
   // follow single children and dominant (>70% size, ≥2 children) children.
   const elChildrenOf = (el: Element) =>
-    el.children.filter(isElement).filter((c) => c.name !== "script" && c.name !== "style");
+    el.children
+      .filter(isElement)
+      .filter((c) => c.name !== "script" && c.name !== "style");
   const sizeOf = (el: Element) => $.html(el)?.length ?? 0;
 
   const wrapperChain: Element[] = [];
@@ -399,7 +499,7 @@ export function splitPageIntoSections(bodyHtml: string): PageSplit {
 
   const sectionRoots = elChildrenOf(container);
 
-  // Not enough structure to split — single Content component
+  // Not enough structure to split - single Content component
   if (sectionRoots.length < 2) {
     const jsx = convertHtmlFragmentToJsx(bodyHtml, 2);
     return {
@@ -440,11 +540,16 @@ export function splitPageIntoSections(bodyHtml: string): PageSplit {
         inner += renderWrapper(idx + 1, depth + 1);
       } else if (isElement(child) && childRender.has(child)) {
         const rendered = childRender.get(child)!;
-        inner += rendered
-          .split("\n")
-          .filter(Boolean)
-          .map((l) => (l.startsWith("<") || l.startsWith("{") ? "  ".repeat(depth + 1) + l : l))
-          .join("\n") + "\n";
+        inner +=
+          rendered
+            .split("\n")
+            .filter(Boolean)
+            .map((l) =>
+              l.startsWith("<") || l.startsWith("{")
+                ? "  ".repeat(depth + 1) + l
+                : l,
+            )
+            .join("\n") + "\n";
       } else {
         inner += serializeNode(child, false, depth + 1);
       }
