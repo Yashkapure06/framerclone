@@ -22,15 +22,21 @@ function emit(res: NextApiResponse, data: Record<string, unknown>) {
   if (!res.writableEnded) res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method !== "GET") return res.status(405).end();
 
-  const {
-    url,
-    removeWatermarks = "true",
-  } = req.query as Record<string, string>;
+  const { url, removeWatermarks = "true" } = req.query as Record<
+    string,
+    string
+  >;
 
-  if (!url) { res.status(400).end(); return; }
+  if (!url) {
+    res.status(400).end();
+    return;
+  }
 
   let parsed: URL;
   try {
@@ -57,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await runScrapeJob(
       { url: parsed.toString(), removeWatermarks: removeWatermarks === "true" },
       (event) => emit(res, event as unknown as Record<string, unknown>),
-      outputDir
+      outputDir,
     );
 
     emit(res, { type: "status", message: "Packaging ZIP…" });
@@ -69,11 +75,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       addDirToZip(zip, path.join(outputDir, "images"), "images");
       addDirToZip(zip, path.join(outputDir, "fonts"), "fonts");
       for (const f of fs.readdirSync(outputDir)) {
-        if (/^favicon\./i.test(f)) zip.file(f, fs.readFileSync(path.join(outputDir, f)));
+        if (/^favicon\./i.test(f))
+          zip.file(f, fs.readFileSync(path.join(outputDir, f)));
       }
       zip.file(
         "README.md",
-        `# ${parsed.hostname}\n\nCloned from ${parsed.toString()}.\n\nOpen \`index.html\` directly in your browser — every page is self-contained (CSS and JavaScript inlined).\nFor best results serve the folder over HTTP: \`npx serve .\`\n`,
+        `# ${parsed.hostname}\n\nCloned from ${parsed.toString()}.\n\nOpen \`index.html\` directly in your browser - every page is self-contained (CSS and JavaScript inlined).\nFor best results serve the folder over HTTP: \`npx serve .\`\n`,
       );
     } else {
       addDirToZip(zip, outputDir, "");
@@ -89,22 +96,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fs.writeFileSync(zipPath, buffer);
 
     // Auto-delete after 10 minutes
-    setTimeout(() => {
-      try { if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath); } catch { /* expired */ }
-    }, 10 * 60 * 1000);
+    setTimeout(
+      () => {
+        try {
+          if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+        } catch {
+          /* expired */
+        }
+      },
+      10 * 60 * 1000,
+    );
 
     const sizeMb = (buffer.byteLength / 1024 / 1024).toFixed(1);
     const filename = `${hostId}.zip`;
     emit(res, { type: "ready", jobId, filename, sizeMb });
   } catch (err) {
     console.error("Stream clone failed:", err);
-    emit(res, { type: "error", message: err instanceof Error ? err.message : "Extraction failed" });
+    emit(res, {
+      type: "error",
+      message: err instanceof Error ? err.message : "Extraction failed",
+    });
   } finally {
-    try { 
+    try {
       if (fs.existsSync(outputDir)) {
-        fs.rmSync(outputDir, { recursive: true, force: true }); 
+        fs.rmSync(outputDir, { recursive: true, force: true });
       }
-    } catch { /* cleanup */ }
+    } catch {
+      /* cleanup */
+    }
     if (!res.writableEnded) res.end();
   }
 }

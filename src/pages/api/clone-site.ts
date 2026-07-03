@@ -17,8 +17,12 @@ function addDirToZip(zip: JSZip, srcDir: string, prefix: string) {
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   const { url, removeWatermarks = true } = req.body as {
     url?: string;
@@ -45,10 +49,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await assertFramerSite(parsed.toString());
 
     // Use the modern, flat, portable-enabled pipeline
-    await runScrapeJob({ 
-      url: parsed.toString(), 
-      removeWatermarks: removeWatermarks !== false 
-    }, () => {}, outputDir);
+    await runScrapeJob(
+      {
+        url: parsed.toString(),
+        removeWatermarks: removeWatermarks !== false,
+      },
+      () => {},
+      outputDir,
+    );
 
     const zip = new JSZip();
     const standaloneDir = path.join(outputDir, "standalone");
@@ -58,11 +66,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       addDirToZip(zip, path.join(outputDir, "images"), "images");
       addDirToZip(zip, path.join(outputDir, "fonts"), "fonts");
       for (const f of fs.readdirSync(outputDir)) {
-        if (/^favicon\./i.test(f)) zip.file(f, fs.readFileSync(path.join(outputDir, f)));
+        if (/^favicon\./i.test(f))
+          zip.file(f, fs.readFileSync(path.join(outputDir, f)));
       }
       zip.file(
         "README.md",
-        `# ${parsed.hostname}\n\nCloned from ${parsed.toString()}.\n\nOpen \`index.html\` directly in your browser — every page is self-contained (CSS and JavaScript inlined).\nFor best results serve the folder over HTTP: \`npx serve .\`\n`,
+        `# ${parsed.hostname}\n\nCloned from ${parsed.toString()}.\n\nOpen \`index.html\` directly in your browser - every page is self-contained (CSS and JavaScript inlined).\nFor best results serve the folder over HTTP: \`npx serve .\`\n`,
       );
     } else {
       addDirToZip(zip, outputDir, "");
@@ -75,7 +84,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="${hostId}.zip"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${hostId}.zip"`,
+    );
     return res.status(200).send(zipBuffer);
   } catch (err) {
     console.error("Clone failed:", err);
@@ -87,7 +99,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (fs.existsSync(outputDir)) {
         fs.rmSync(outputDir, { recursive: true, force: true });
       }
-    } catch { /* cleanup best-effort */ }
+    } catch {
+      /* cleanup best-effort */
+    }
   }
 }
 

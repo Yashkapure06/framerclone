@@ -8,7 +8,9 @@ export interface MarketplaceData {
   price?: string;
 }
 
-export async function scrapeFramerMarketplace(slug: string): Promise<MarketplaceData> {
+export async function scrapeFramerMarketplace(
+  slug: string,
+): Promise<MarketplaceData> {
   try {
     const url = `https://www.framer.com/marketplace/templates/${encodeURIComponent(slug)}/`;
     const res = await fetch(url, {
@@ -25,23 +27,29 @@ export async function scrapeFramerMarketplace(slug: string): Promise<Marketplace
 
     const html = await res.text();
 
-    if (!html.toLowerCase().includes(slug.toLowerCase())) return { found: false };
+    if (!html.toLowerCase().includes(slug.toLowerCase()))
+      return { found: false };
 
     const name =
       html
-        .match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i)?.[1]
-        ?.replace(/\s*[|—–-]\s*Framer.*$/i, "")
-        .trim() ||
-      html.match(/<h1[^>]*>([^<]{2,80})<\/h1>/i)?.[1]?.trim();
+        .match(
+          /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i,
+        )?.[1]
+        ?.replace(/\s*[|-–-]\s*Framer.*$/i, "")
+        .trim() || html.match(/<h1[^>]*>([^<]{2,80})<\/h1>/i)?.[1]?.trim();
 
     if (!name) return { found: false };
 
     const description =
       html
-        .match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']/i)?.[1]
+        .match(
+          /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']/i,
+        )?.[1]
         ?.trim() ||
       html
-        .match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1]
+        .match(
+          /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i,
+        )?.[1]
         ?.trim();
 
     const priceMatch = html.match(/>\s*\$(\d+(?:\.\d{2})?)\s*</);
@@ -74,7 +82,9 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
     try {
       const data = JSON.parse(m[1]);
       if (data && typeof data === "object") return data;
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
   return null;
 }
@@ -90,7 +100,8 @@ function extractCategories(
       .filter(Boolean)
       .slice(0, 5);
   }
-  const tagPattern = /class=["'][^"']*(?:tag|category|badge|chip)[^"']*["'][^>]*>([^<]{2,30})</gi;
+  const tagPattern =
+    /class=["'][^"']*(?:tag|category|badge|chip)[^"']*["'][^>]*>([^<]{2,30})</gi;
   const tags = new Set<string>();
   for (const m of html.matchAll(tagPattern)) {
     const t = m[1].trim();
