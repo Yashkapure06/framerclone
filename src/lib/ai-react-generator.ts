@@ -20,7 +20,10 @@ function truncateAtTagBoundary(html: string, maxChars: number): string {
   return html.slice(0, sliceAt) + "\n<!-- truncated -->";
 }
 
-function buildAssetMapLines(assetMap: Record<string, string>, max = 20): string {
+function buildAssetMapLines(
+  assetMap: Record<string, string>,
+  max = 20,
+): string {
   const entries = Object.entries(assetMap).slice(0, max);
   if (!entries.length) return "(none)";
   return entries.map(([k, v]) => `  ${k} → ${v}`).join("\n");
@@ -38,7 +41,7 @@ SECTIONS: Identify 3–6 logical sections (e.g. SiteHeader, HeroSection, Feature
 
 ## CRITICAL: Generate REAL React Components, not dangerouslySetInnerHTML
 
-### INTERACTIVE ELEMENTS — These MUST use React state:
+### INTERACTIVE ELEMENTS - These MUST use React state:
 
 1. **FAQ / Accordion** (collapsible questions):
    Convert this HTML pattern:
@@ -153,13 +156,14 @@ ${truncateAtTagBoundary(bodyHtml, MAX_HTML_CHARS)}`;
  */
 function parseMarkdownComponents(text: string): AiGeneratedSection[] {
   const sections: AiGeneratedSection[] = [];
-  const pattern = /^#\s+([A-Za-z][A-Za-z0-9]*)\s*\n```(?:[jt]sx?|javascript|typescript)?\s*\n([\s\S]*?)```/gm;
+  const pattern =
+    /^#\s+([A-Za-z][A-Za-z0-9]*)\s*\n```(?:[jt]sx?|javascript|typescript)?\s*\n([\s\S]*?)```/gm;
   for (const match of text.matchAll(pattern)) {
     const name = match[1].trim();
     let code = match[2].trim();
     if (name && code.length > 20) {
       code = ensureImports(code);
-      if (code.includes('data-framer-') || code.includes('fm-')) {
+      if (code.includes("data-framer-") || code.includes("fm-")) {
         code = fixFramerOpacity(code);
       }
       sections.push({ name, code });
@@ -169,19 +173,23 @@ function parseMarkdownComponents(text: string): AiGeneratedSection[] {
 }
 
 function ensureImports(code: string): string {
-  let imports = '';
+  let imports = "";
   if (/useState|useEffect|useRef|useCallback|useMemo/.test(code)) {
     imports += "import { useState, useEffect, useRef } from 'react';\n";
   }
   if (/^import\s+React\b/m.test(code)) {
-    return imports ? code.replace(/^import\s+React\b.*?;?\n/, '') : `import React from 'react';\n${code}`;
+    return imports
+      ? code.replace(/^import\s+React\b.*?;?\n/, "")
+      : `import React from 'react';\n${code}`;
   }
   return imports + code;
 }
 
 function fixFramerOpacity(code: string): string {
-  if (code.includes('opacity') || !code.includes('data-framer')) return code;
-  return code + '\n<style>{\'[data-framer-] { opacity: 1 !important; }\'}</style>';
+  if (code.includes("opacity") || !code.includes("data-framer")) return code;
+  return (
+    code + "\n<style>{'[data-framer-] { opacity: 1 !important; }'}</style>"
+  );
 }
 
 /**
@@ -190,7 +198,8 @@ function fixFramerOpacity(code: string): string {
  */
 function parseMarkdownComponentsFallback(text: string): AiGeneratedSection[] {
   const sections: AiGeneratedSection[] = [];
-  const pattern = /^#{1,3}\s+([A-Za-z][A-Za-z0-9]*)\s*\n```[^\n]*\n([\s\S]*?)```/gm;
+  const pattern =
+    /^#{1,3}\s+([A-Za-z][A-Za-z0-9]*)\s*\n```[^\n]*\n([\s\S]*?)```/gm;
   for (const match of text.matchAll(pattern)) {
     const name = match[1].trim();
     const code = match[2].trim();
@@ -213,7 +222,7 @@ export async function generateAiReactPage(
         {
           role: "system",
           content:
-            "You are an expert React developer. Convert HTML to clean React JSX components WITH STATE MANAGEMENT. Generate REAL interactive components — use useState for FAQs, tabs, modals, accordions, dropdowns. Do NOT use dangerouslySetInnerHTML. Output only the markdown format requested — component name as a # heading, then a ```jsx code block. Include useState/useEffect imports as needed.",
+            "You are an expert React developer. Convert HTML to clean React JSX components WITH STATE MANAGEMENT. Generate REAL interactive components - use useState for FAQs, tabs, modals, accordions, dropdowns. Do NOT use dangerouslySetInnerHTML. Output only the markdown format requested - component name as a # heading, then a ```jsx code block. Include useState/useEffect imports as needed.",
         },
         { role: "user", content: prompt },
       ],

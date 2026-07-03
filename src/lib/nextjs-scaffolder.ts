@@ -61,7 +61,7 @@ function extractMetaDescription(html: string): string {
 
 function extractLinkTags(html: string): string[] {
   const tags: string[] = [];
-  // keep font preconnects, preloads, icon, canonical — skip stylesheet (in combined.css)
+  // keep font preconnects, preloads, icon, canonical - skip stylesheet (in combined.css)
   for (const m of html.matchAll(/<link[^>]*>/gi)) {
     const tag = m[0];
     if (
@@ -389,7 +389,7 @@ Open <http://localhost:3000> in your browser.
 
 ## Deploy
 
-Push to GitHub and import in [Vercel](https://vercel.com) — it auto-detects Next.js.
+Push to GitHub and import in [Vercel](https://vercel.com) - it auto-detects Next.js.
 `,
   );
 

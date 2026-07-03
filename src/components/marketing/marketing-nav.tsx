@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { GithubIcon } from "@/components/github-icon";
 import { GITHUB_URL } from "@/lib/site-config";
 
-/** Sticky top nav on the dark canvas — wordmark left, links center, pill pair right. */
+/** Sticky top nav on the dark canvas - wordmark left, links center, pill pair right. */
 export function MarketingNav({ dark: _dark = true }: { dark?: boolean }) {
   const router = useRouter();
 
