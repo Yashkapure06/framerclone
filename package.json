@@ -1,7 +1,29 @@
 {
   "name": "website-extractor",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "Open source website extraction and cloning for HTML, React, and Next.js exports.",
+  "keywords": [
+    "website extractor",
+    "website clone",
+    "website cloning",
+    "framer clone",
+    "framer extraction",
+    "html to react",
+    "nextjs export",
+    "open source",
+    "seo",
+    "website exporter"
+  ],
+  "homepage": "https://github.com/Yashkapure06/website-extractor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yashkapure06/website-extractor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Yashkapure06/website-extractor/issues"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,13 +32,16 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
-    "archiver": "^7.0.1",
+    "@google/genai": "^1.49.0",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
     "playwright": "^1.59.1",
+    "prettier": "^3.8.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shadcn": "^4.1.2",
@@ -26,7 +51,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/archiver": "^7.0.0",
+    "@types/node": "25.6.0",
+    "@types/react": "19.2.14",
+    "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
     "tailwindcss": "^4"

@@ -1,40 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# SiteForge
 
-## Getting Started
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![Open Source](https://img.shields.io/badge/open%20source-yes-brightgreen)](https://github.com/Yashkapure06/website-extractor)
 
-First, run the development server:
+SiteForge is an open source app for analyzing public websites and exporting them into production-ready output formats. It crawls, validates, previews, and rebuilds sites as clean HTML/CSS/JS, React, or Next.js.
+
+## What It Does
+
+- Extracts public websites into structured output
+- Detects and rebuilds site sections and dependencies
+- Provides previews, validation, and downloadable exports
+- Supports AI-assisted cleanup and framework generation
+- Focuses on website-to-code workflows for builders, agencies, and developers
+
+## Supported Outputs
+
+- Plain HTML, CSS, and JavaScript
+- React
+- Next.js
+
+## Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Environment Setup
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+1. Copy `.env.example` to `.env.local`
+2. Add one or more AI provider keys
+3. Set `AI_PROVIDER_ORDER` to choose the fallback chain
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## AI Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `GET /api/ai/providers`
+- `POST /api/ai/generate`
+- `POST /api/ai/framework-build`
+- `POST /api/ai/framework-files`
 
-## Learn More
+Example request body:
 
-To learn more about Next.js, take a look at the following resources:
+```json
+{
+  "system": "You clean extracted HTML into production-ready React.",
+  "prompt": "Convert this landing page into reusable React components.",
+  "provider": "openrouter"
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+If the selected provider fails, the server falls back to the next configured provider in `AI_PROVIDER_ORDER`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Core API
 
-## Deploy on Vercel
+- `POST /api/scan`
+- `POST /api/extract`
+- `GET /api/jobs/:id`
+- `GET /api/preview/:id`
+- `GET /api/validate/:id`
+- `GET /api/download/:id`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Repository Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+- `src/pages` application routes and API handlers
+- `src/lib` extraction, conversion, and AI helpers
+- `src/components` UI and layout components
+- `public` static assets
+
+## Open Source Files
+
+- [LICENSE](LICENSE)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+
+## Contributing
+
+This project is meant to be built in the open. If you want to help, start by running the app locally, testing a workflow end to end, and sharing what you found. Based on those outcomes, open an issue or raise a pull request so we can improve it together as a community.
+
+Suggested contribution flow:
+
+1. Pick an issue or an area you want to improve.
+2. Run the project locally and test the relevant path.
+3. Share the result, including what worked and what still needs attention.
+4. Open a pull request with the fix, improvement, or documentation update.
+
+Please also read [CONTRIBUTING.md](CONTRIBUTING.md) before sending changes.
+
+## Security
+
+If you find a vulnerability, follow the process in [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
